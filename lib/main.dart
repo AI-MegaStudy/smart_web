@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 
 import 'utils/app_colors.dart';
 import 'view_models/order_detail/order_detail_view_model.dart';
@@ -203,6 +203,34 @@ class _SmartWebDesignShellState extends State<SmartWebDesignShell> {
               icon: const Icon(Icons.local_shipping_outlined),
             )
           : null,
+    );
+  }
+}
+*/
+
+import 'package:flutter/material.dart';
+import 'package:smart_web/yeeun/core/app_routes.dart';
+
+void main() {
+  runApp(const HarvestSlotApp());
+}
+
+class HarvestSlotApp extends StatelessWidget {
+  const HarvestSlotApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Harvest Slot',
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/',
+      routes: AppRoutes.routes,
+      theme: ThemeData(
+        fontFamily: 'Pretendard',
+        scaffoldBackgroundColor: const Color(0xffF8FAF3),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff1F6B4A)),
+        useMaterial3: true,
+      ),
     );
   }
 }
