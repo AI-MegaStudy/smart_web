@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/app_colors.dart';
 import '../widgets/app_header.dart';
 
@@ -40,12 +41,15 @@ class SignupPage extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          '/email-verification',
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                         ),
-                        child: const Text('회원가입 완료'),
+                        child: const Text('이메일 인증하기'),
                       ),
                     ),
                   ],

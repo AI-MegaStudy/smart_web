@@ -9,7 +9,7 @@ class ProductViewModel extends ChangeNotifier {
       name: '프리미엄 사과 5kg',
       imageUrl: 'assets/images/apple1.jpg',
       harvestDate: '10.12~10.18',
-      description: '수확 예정',
+      description: '당도가 높고 단단한 과육의 선물용 사과입니다.',
       price: 39000,
       stockKg: 110,
       reservable: true,
@@ -19,7 +19,7 @@ class ProductViewModel extends ChangeNotifier {
       name: '달콤 사과 3kg',
       imageUrl: 'assets/images/apple2.jpg',
       harvestDate: '10.20~10.27',
-      description: '수확 예정',
+      description: '가정에서 부담 없이 즐기기 좋은 소포장 상품입니다.',
       price: 32000,
       stockKg: 42,
       reservable: true,
@@ -29,10 +29,17 @@ class ProductViewModel extends ChangeNotifier {
       name: '시나노 골드 사과 7.5kg',
       imageUrl: 'assets/images/apple3.jpg',
       harvestDate: '09.28~10.04',
-      description: '수확 예정',
+      description: '향이 풍부하고 산미가 산뜻한 예약 한정 사과입니다.',
       price: 68000,
       stockKg: 90,
       reservable: true,
     ),
   ];
+
+  ProductModel findById(String? id) {
+    return products.firstWhere(
+      (product) => product.id == id,
+      orElse: () => products.first,
+    );
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/app_colors.dart';
 
 class AppHeader extends StatelessWidget {
@@ -17,6 +18,7 @@ class AppHeader extends StatelessWidget {
         children: [
           InkWell(
             onTap: () => Navigator.pushNamed(context, '/'),
+            borderRadius: BorderRadius.circular(12),
             child: Row(
               children: [
                 Container(
@@ -38,6 +40,8 @@ class AppHeader extends StatelessWidget {
           ),
           const Spacer(),
           _navButton(context, '상품', '/products', filled: false),
+          const SizedBox(width: 8),
+          _navButton(context, '예약현황', '/reservation-status', filled: false),
           const SizedBox(width: 8),
           _navButton(context, '로그인', '/login', filled: false),
           const SizedBox(width: 8),
