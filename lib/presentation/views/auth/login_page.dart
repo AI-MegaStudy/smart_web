@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../../core/session/mock_auth_session.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 
@@ -77,6 +78,7 @@ class _LoginPageState extends State<LoginPage> {
                       return;
                     }
 
+                    MockAuthSession.login();
                     Navigator.pushNamedAndRemoveUntil(
                       context,
                       AppRoutes.home,

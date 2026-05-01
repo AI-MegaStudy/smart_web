@@ -150,7 +150,7 @@ class _PageIntro extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '배송지와 결제 전 확인',
+            '배송 정보와 결제 전 확인',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w900,
@@ -158,7 +158,7 @@ class _PageIntro extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '기본 배송지로 예약을 주문 전환',
+            '받는 분과 배송지를 입력해주세요',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w900,
               color: const Color(0xFF163B2B),
@@ -166,7 +166,7 @@ class _PageIntro extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '저장된 배송지를 선택하고 필요한 부분만 수정한 뒤 결제 단계로 이동하세요.',
+            '주문에 사용할 수령인, 연락처, 주소를 확인한 뒤 결제 단계로 이동하세요.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               height: 1.5,
               color: const Color(0xFF5F6C62),
@@ -192,58 +192,57 @@ class _ShippingForm extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '배송 프로필 선택',
+              '배송 정보 입력',
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
             Text(
-              '저장된 기본 배송지를 우선 사용합니다.',
+              '기본 배송지를 사용할 수 있고, 이번 주문에 필요한 정보는 직접 수정할 수 있습니다.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF5F6C62)),
             ),
             const SizedBox(height: 16),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 620;
-                final children = [
-                  _AddressChoiceCard(
-                    title: '기본 배송지',
-                    name: viewModel.receiverName,
-                    phone: viewModel.receiverPhone,
-                    address: viewModel.shippingAddress,
-                    selected: true,
+            _DefaultAddressSwitch(viewModel: viewModel),
+            const SizedBox(height: 18),
+            _TextInput(
+              label: '받는 분',
+              initialValue: viewModel.receiverName,
+              onChanged: viewModel.updateReceiverName,
+            ),
+            const SizedBox(height: 14),
+            _TextInput(
+              label: '연락처',
+              initialValue: viewModel.receiverPhone,
+              onChanged: viewModel.updateReceiverPhone,
+            ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _TextInput(
+                    label: '주소',
+                    initialValue: viewModel.shippingAddress,
+                    onChanged: viewModel.updateShippingAddress,
+                    maxLines: 2,
                   ),
-                  const _AddressChoiceCard(
-                    title: '회사 배송지',
-                    name: '홍길동',
-                    phone: '010-1111-2222',
-                    address: '서울시 서초구 반포대로 45',
-                    selected: false,
+                ),
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: OutlinedButton.icon(
+                    onPressed: () => showAppAlertDialog(
+                      context,
+                      message: '카카오 주소 API 연동은 추후 배송지 관리 기능과 함께 연결할 예정입니다.',
+                    ),
+                    icon: const Icon(Icons.search),
+                    label: const Text('주소 검색'),
                   ),
-                ];
-
-                if (!isWide) {
-                  return Column(
-                    children: [
-                      for (final child in children) ...[
-                        child,
-                        const SizedBox(height: 10),
-                      ],
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: children[0]),
-                    const SizedBox(width: 12),
-                    Expanded(child: children[1]),
-                  ],
-                );
-              },
+                ),
+              ],
             ),
             const SizedBox(height: 18),
             Text(
@@ -281,37 +280,6 @@ class _ShippingForm extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            const Divider(height: 1),
-            const SizedBox(height: 18),
-            Text(
-              '필요 시 수정',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 14),
-            _TextInput(
-              label: '수령인 변경',
-              initialValue: '',
-              hintText: viewModel.receiverName,
-              onChanged: viewModel.updateReceiverName,
-            ),
-            const SizedBox(height: 14),
-            _TextInput(
-              label: '전화번호 변경',
-              initialValue: '',
-              hintText: viewModel.receiverPhone,
-              onChanged: viewModel.updateReceiverPhone,
-            ),
-            const SizedBox(height: 14),
-            _TextInput(
-              label: '상세 주소 변경',
-              initialValue: '',
-              hintText: viewModel.shippingAddress,
-              onChanged: viewModel.updateShippingAddress,
-              maxLines: 2,
-            ),
             const SizedBox(height: 16),
             const NoticeBox(message: '예약한 수확 상품은 결제 전까지만 주문서에서 수정할 수 있습니다.'),
           ],
@@ -321,63 +289,52 @@ class _ShippingForm extends StatelessWidget {
   }
 }
 
-class _AddressChoiceCard extends StatelessWidget {
-  const _AddressChoiceCard({
-    required this.title,
-    required this.name,
-    required this.phone,
-    required this.address,
-    required this.selected,
-  });
+class _DefaultAddressSwitch extends StatelessWidget {
+  const _DefaultAddressSwitch({required this.viewModel});
 
-  final String title;
-  final String name;
-  final String phone;
-  final String address;
-  final bool selected;
+  final CheckoutViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: selected ? const Color(0xFFE7F3EB) : Colors.white,
-        border: Border.all(
-          color: selected ? const Color(0xFF2F6B4E) : const Color(0xFFDCE3DD),
-          width: selected ? 1.5 : 1,
-        ),
+        color: const Color(0xFFF7F8F3),
+        border: Border.all(color: const Color(0xFFDCE3DD)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            Checkbox(
+              value: viewModel.useDefaultAddress,
+              onChanged: (value) {
+                viewModel.updateUseDefaultAddress(value ?? false);
+              },
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '기본 배송지 사용',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF163B2B),
                     ),
                   ),
-                ),
-                if (selected)
-                  Icon(
-                    Icons.check_circle,
-                    color: Theme.of(context).colorScheme.primary,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${viewModel.defaultReceiverName} · ${viewModel.defaultReceiverPhone} · ${viewModel.defaultShippingAddress}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF5F6C62),
+                    ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text('$name · $phone'),
-            const SizedBox(height: 6),
-            Text(
-              address,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF5F6C62)),
+                ],
+              ),
             ),
           ],
         ),
@@ -546,14 +503,12 @@ class _TextInput extends StatelessWidget {
     required this.label,
     required this.initialValue,
     required this.onChanged,
-    this.hintText,
     this.maxLines = 1,
   });
 
   final String label;
   final String initialValue;
   final ValueChanged<String> onChanged;
-  final String? hintText;
   final int maxLines;
 
   @override
@@ -564,7 +519,6 @@ class _TextInput extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        hintText: hintText,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );

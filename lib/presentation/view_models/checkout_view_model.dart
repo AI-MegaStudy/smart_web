@@ -15,6 +15,11 @@ class CheckoutViewModel extends ChangeNotifier {
 
   bool _isLoading = true;
   List<LocalBasketItemModel> _items = const [];
+  bool useDefaultAddress = true;
+
+  final String defaultReceiverName = '홍길동';
+  final String defaultReceiverPhone = '010-1111-2222';
+  final String defaultShippingAddress = '서울시 강남구 테헤란로 123';
 
   String receiverName = '홍길동';
   String receiverPhone = '010-1111-2222';
@@ -64,6 +69,16 @@ class CheckoutViewModel extends ChangeNotifier {
 
   void updateDeliveryMemo(String value) {
     deliveryMemo = value;
+    notifyListeners();
+  }
+
+  void updateUseDefaultAddress(bool value) {
+    useDefaultAddress = value;
+    if (value) {
+      receiverName = defaultReceiverName;
+      receiverPhone = defaultReceiverPhone;
+      shippingAddress = defaultShippingAddress;
+    }
     notifyListeners();
   }
 }

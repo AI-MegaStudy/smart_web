@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 import '../../../app/router.dart';
+import '../../../core/session/mock_auth_session.dart';
 import '../../view_models/home_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/notice_box.dart';
@@ -2573,14 +2574,41 @@ class _TopAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = MockAuthSession.isLoggedIn;
+    final effectiveLabel = switch (routeName) {
+      AppRoutes.products => '상품',
+      AppRoutes.myOrders => '내 주문',
+      AppRoutes.signup when isLoggedIn => '마이페이지',
+      AppRoutes.signup => '회원가입',
+      AppRoutes.login when isLoggedIn => '로그아웃',
+      AppRoutes.login => '로그인',
+      _ => label,
+    };
+    final effectiveRouteName = switch (routeName) {
+      AppRoutes.signup when isLoggedIn => AppRoutes.myPage,
+      _ => routeName,
+    };
+
     return TextButton(
-      onPressed: () => Navigator.pushNamed(context, routeName),
+      onPressed: () {
+        if (routeName == AppRoutes.login && isLoggedIn) {
+          MockAuthSession.logout();
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.home,
+            (route) => false,
+          );
+          return;
+        }
+
+        Navigator.pushNamed(context, effectiveRouteName);
+      },
       style: TextButton.styleFrom(
         minimumSize: Size(compact ? 48 : 64, 40),
         padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 14),
       ),
       child: Text(
-        label,
+        effectiveLabel,
         maxLines: 1,
         style: TextStyle(
           fontSize: compact ? 13 : 14,

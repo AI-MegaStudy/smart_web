@@ -5,6 +5,7 @@ import '../presentation/views/basket/local_basket_page.dart';
 import '../presentation/views/checkout/checkout_page.dart';
 import '../presentation/views/placeholders/coming_soon_page.dart';
 import '../presentation/views/payment/mock_payment_page.dart';
+import '../presentation/views/mypage/my_page.dart';
 import '../presentation/views/products/product_detail_page.dart';
 import '../presentation/views/products/product_list_page.dart';
 import '../presentation/views/reservation/reservation_confirm_page.dart';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const checkout = '/checkout';
   static const payment = '/payment';
   static const orderComplete = '/orders/complete';
+  static const myPage = '/me';
   static const myOrders = '/me/orders';
   static const orderDetail = '/me/orders/detail';
   static const returnRequest = '/me/orders/return';
@@ -54,6 +56,7 @@ class AppRoutes {
       orderComplete => OrderCompletePage(
         orderId: settings.arguments is int ? settings.arguments as int : 8,
       ),
+      myPage => const MyPage(),
       myOrders => const MyOrdersPage(),
       orderDetail => OrderDetailPage(
         orderId: settings.arguments is int ? settings.arguments as int : 8,
