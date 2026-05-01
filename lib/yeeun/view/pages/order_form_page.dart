@@ -169,20 +169,27 @@ class _DeliveryForm extends StatelessWidget {
           const SizedBox(height: 8),
           const Text('저장된 기본 배송지를 우선 사용합니다.', style: TextStyle(fontSize: 12)),
           const SizedBox(height: 22),
-          Row(
-            children: List.generate(addresses.length, (index) {
-              final profile = addresses[index];
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: index == 0 ? 12 : 0),
-                  child: _AddressCard(
-                    profile: profile,
-                    selected: selectedAddressIndex == index,
-                    onTap: () => onSelectAddress(index),
-                  ),
-                ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final twoColumns = constraints.maxWidth >= 520;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: List.generate(addresses.length, (index) {
+                  final width = twoColumns
+                      ? (constraints.maxWidth - 12) / 2
+                      : constraints.maxWidth;
+                  return SizedBox(
+                    width: width,
+                    child: _AddressCard(
+                      profile: addresses[index],
+                      selected: selectedAddressIndex == index,
+                      onTap: () => onSelectAddress(index),
+                    ),
+                  );
+                }),
               );
-            }),
+            },
           ),
           const SizedBox(height: 20),
           const Text('배송 메모 선택', style: TextStyle(fontWeight: FontWeight.w900)),
@@ -249,7 +256,7 @@ class _AddressCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        height: 92,
+        constraints: const BoxConstraints(minHeight: 92),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: selected ? const Color(0xffB3EFCB) : Colors.white,
@@ -257,11 +264,13 @@ class _AddressCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(profile.title, style: const TextStyle(fontWeight: FontWeight.w900)),
             const SizedBox(height: 7),
             Text('${profile.receiver} · ${profile.phone}', style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 3),
             Text(profile.address, style: const TextStyle(fontSize: 12)),
           ],
         ),

@@ -57,7 +57,7 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
                           height: 1.15,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 18),
                       isMobile
                           ? Column(
                               children: [
@@ -142,46 +142,7 @@ class _ReturnForm extends StatelessWidget {
           const SizedBox(height: 8),
           const Text('배송 완료된 주문 라인만 선택 가능합니다.', style: TextStyle(fontSize: 12)),
           const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    product.imageUrl,
-                    width: 74,
-                    height: 64,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('후지 사과 5kg', style: TextStyle(fontWeight: FontWeight.w900)),
-                      SizedBox(height: 8),
-                      Text('주문번호 ORD-20261012-008  후지 사과 2박스'),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xffBFEAF5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text('선택됨', style: TextStyle(fontWeight: FontWeight.w900)),
-                ),
-              ],
-            ),
-          ),
+          _ReturnProductCard(product: product),
           const SizedBox(height: 18),
           const Text('반품 사유 선택', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
@@ -255,6 +216,8 @@ class _ReturnForm extends StatelessWidget {
           const Text('요청 금액 선택', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
           Wrap(
+            spacing: 0,
+            runSpacing: 8,
             children: [
               _RefundOption(
                 text: '전액 78,000원',
@@ -272,6 +235,52 @@ class _ReturnForm extends StatelessWidget {
                 onTap: () => onRefundChanged('검수 후 산정'),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReturnProductCard extends StatelessWidget {
+  final ProductModel product;
+
+  const _ReturnProductCard({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(product.imageUrl, width: 74, height: 64, fit: BoxFit.cover),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('후지 사과 5kg', style: TextStyle(fontWeight: FontWeight.w900)),
+                SizedBox(height: 8),
+                Text('주문번호 ORD-20261012-008  후지 사과 2박스'),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xffBFEAF5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text('선택됨', style: TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -298,8 +307,8 @@ class _ReasonChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 96,
-        height: 62,
+        width: 104,
+        constraints: const BoxConstraints(minHeight: 68),
         padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
           color: selected ? const Color(0xffB3EFCB) : Colors.white,
@@ -307,11 +316,12 @@ class _ReasonChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
             const SizedBox(height: 5),
-            Text(detail, style: const TextStyle(fontSize: 10)),
+            Text(detail, style: const TextStyle(fontSize: 10, height: 1.2)),
           ],
         ),
       ),
