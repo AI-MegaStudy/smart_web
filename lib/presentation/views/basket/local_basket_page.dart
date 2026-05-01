@@ -73,7 +73,12 @@ class _LocalBasketPageState extends State<LocalBasketPage> {
                           final isWide = constraints.maxWidth >= 980;
                           final list = _BasketList(
                             items: _viewModel.items,
-                            onRemove: _viewModel.removeItem,
+                            onIncrease: _viewModel.increasePackageCount,
+                            onDecrease: _viewModel.decreasePackageCount,
+                            onSelect: _viewModel.toggleItemSelection,
+                            isSelected: _viewModel.isSelected,
+                            onRemoveSelected: _viewModel.removeSelectedItems,
+                            hasSelectedItems: _viewModel.hasSelectedItems,
                           );
                           final summary = _BasketSummary(viewModel: _viewModel);
 
@@ -198,10 +203,23 @@ class _PageIntro extends StatelessWidget {
 }
 
 class _BasketList extends StatelessWidget {
-  const _BasketList({required this.items, required this.onRemove});
+  const _BasketList({
+    required this.items,
+    required this.onIncrease,
+    required this.onDecrease,
+    required this.onSelect,
+    required this.isSelected,
+    required this.onRemoveSelected,
+    required this.hasSelectedItems,
+  });
 
   final List<LocalBasketItemModel> items;
-  final ValueChanged<LocalBasketItemModel> onRemove;
+  final ValueChanged<LocalBasketItemModel> onIncrease;
+  final ValueChanged<LocalBasketItemModel> onDecrease;
+  final void Function(LocalBasketItemModel item, bool selected) onSelect;
+  final bool Function(LocalBasketItemModel item) isSelected;
+  final VoidCallback onRemoveSelected;
+  final bool hasSelectedItems;
 
   @override
   Widget build(BuildContext context) {
@@ -212,8 +230,19 @@ class _BasketList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _BasketSelectionToolbar(
+          selectedCount: items.where(isSelected).length,
+          onRemoveSelected: hasSelectedItems ? onRemoveSelected : null,
+        ),
+        const SizedBox(height: 12),
         for (final item in items) ...[
-          _BasketItemCard(item: item, onRemove: () => onRemove(item)),
+          _BasketItemCard(
+            item: item,
+            selected: isSelected(item),
+            onSelected: (selected) => onSelect(item, selected),
+            onIncrease: () => onIncrease(item),
+            onDecrease: () => onDecrease(item),
+          ),
           const SizedBox(height: 12),
         ],
       ],
@@ -222,10 +251,19 @@ class _BasketList extends StatelessWidget {
 }
 
 class _BasketItemCard extends StatelessWidget {
-  const _BasketItemCard({required this.item, required this.onRemove});
+  const _BasketItemCard({
+    required this.item,
+    required this.selected,
+    required this.onSelected,
+    required this.onIncrease,
+    required this.onDecrease,
+  });
 
   final LocalBasketItemModel item;
-  final VoidCallback onRemove;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+  final VoidCallback onIncrease;
+  final VoidCallback onDecrease;
 
   @override
   Widget build(BuildContext context) {
@@ -243,6 +281,11 @@ class _BasketItemCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Checkbox(
+                  value: selected,
+                  onChanged: (value) => onSelected(value ?? false),
+                ),
+                const SizedBox(width: 4),
                 const _BasketThumb(),
                 const SizedBox(width: 12),
                 Expanded(
@@ -266,21 +309,7 @@ class _BasketItemCard extends StatelessWidget {
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const StatusBadge(label: '주문 전'),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: onRemove,
-                      icon: const Icon(Icons.remove_circle_outline, size: 18),
-                      label: const Text('빼기'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                    ),
-                  ],
+                  children: [const StatusBadge(label: '주문 전')],
                 ),
               ],
             ),
@@ -295,6 +324,12 @@ class _BasketItemCard extends StatelessWidget {
                 _InfoChip(label: '${item.packageCount}박스'),
                 _InfoChip(label: '${formatKg(item.reservedKg)}kg'),
               ],
+            ),
+            const SizedBox(height: 14),
+            _QuantityStepper(
+              packageCount: item.packageCount,
+              onIncrease: onIncrease,
+              onDecrease: item.packageCount > 1 ? onDecrease : null,
             ),
             const SizedBox(height: 14),
             _ItemRow(
@@ -348,6 +383,97 @@ class _EmptyBasketPanel extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BasketSelectionToolbar extends StatelessWidget {
+  const _BasketSelectionToolbar({
+    required this.selectedCount,
+    required this.onRemoveSelected,
+  });
+
+  final int selectedCount;
+  final VoidCallback? onRemoveSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFDCE3DD)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                selectedCount == 0
+                    ? '삭제할 상품을 선택할 수 있습니다'
+                    : '$selectedCount개 상품 선택됨',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF5F6C62),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: onRemoveSelected,
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('선택 삭제'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuantityStepper extends StatelessWidget {
+  const _QuantityStepper({
+    required this.packageCount,
+    required this.onIncrease,
+    required this.onDecrease,
+  });
+
+  final int packageCount;
+  final VoidCallback onIncrease;
+  final VoidCallback? onDecrease;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          '박스 수량',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: const Color(0xFF5F6C62),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        IconButton.outlined(
+          onPressed: onDecrease,
+          icon: const Icon(Icons.remove),
+          tooltip: '수량 줄이기',
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            '$packageCount',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+        ),
+        IconButton.filled(
+          onPressed: onIncrease,
+          icon: const Icon(Icons.add),
+          tooltip: '수량 늘리기',
+        ),
+      ],
     );
   }
 }

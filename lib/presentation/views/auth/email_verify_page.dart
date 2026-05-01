@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../view_models/auth_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 import 'login_page.dart';
 
 class EmailVerifyPage extends StatefulWidget {
@@ -75,12 +76,17 @@ class _EmailVerifyPageState extends State<EmailVerifyPage> {
                 ),
                 const SizedBox(width: 10),
                 FilledButton(
-                  onPressed: _viewModel.canVerify
-                      ? () => Navigator.pushReplacementNamed(
-                          context,
-                          AppRoutes.login,
-                        )
-                      : null,
+                  onPressed: () {
+                    if (!_viewModel.canVerify) {
+                      showAppAlertDialog(
+                        context,
+                        message: '6자리 인증 코드를 입력해주세요.',
+                      );
+                      return;
+                    }
+
+                    Navigator.pushReplacementNamed(context, AppRoutes.login);
+                  },
                   child: const Text('인증 완료'),
                 ),
               ],

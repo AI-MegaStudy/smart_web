@@ -2,27 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../../core/utils/formatters.dart';
 import '../../data/models/harvest_slot_model.dart';
-import '../../data/models/product_model.dart';
 import 'status_badge.dart';
 
 class HarvestSlotCard extends StatelessWidget {
   const HarvestSlotCard({
     super.key,
     required this.slot,
-    required this.product,
+    required this.packageUnitKg,
+    required this.packagePrice,
+    required this.availablePackageCount,
     required this.selected,
     required this.onTap,
   });
 
   final HarvestSlotModel slot;
-  final ProductModel product;
+  final double packageUnitKg;
+  final int packagePrice;
+  final int availablePackageCount;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final availablePackageCount = slot.availableKg ~/ product.packageUnitKg;
-
     return Card(
       color: selected ? const Color(0xFFE9F4EC) : Colors.white,
       child: InkWell(
@@ -57,9 +58,9 @@ class HarvestSlotCard extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _SlotChip(label: '${formatKg(product.packageUnitKg)}kg 박스'),
+                  _SlotChip(label: '${formatKg(packageUnitKg)}kg 박스'),
                   _SlotChip(label: '잔여 $availablePackageCount박스'),
-                  _SlotChip(label: formatPrice(slot.confirmedPrice)),
+                  _SlotChip(label: formatPrice(packagePrice)),
                 ],
               ),
               const SizedBox(height: 12),

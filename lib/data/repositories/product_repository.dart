@@ -24,8 +24,8 @@ class ProductRepository {
 const _products = [
   ProductModel(
     productId: 3,
-    name: '후지 사과 5kg',
-    farmName: '청송 햇살농원',
+    name: '후지 사과',
+    farmName: '충주 햇살농원',
     variety: '후지',
     packageUnitKg: 5,
     price: 39000,
@@ -37,7 +37,7 @@ const _products = [
   ),
   ProductModel(
     productId: 4,
-    name: '홍로 사과 3kg',
+    name: '홍로 사과',
     farmName: '문경 바람농장',
     variety: '홍로',
     packageUnitKg: 3,
@@ -50,7 +50,7 @@ const _products = [
   ),
   ProductModel(
     productId: 5,
-    name: '시나노골드 사과 7.5kg',
+    name: '시나노골드 사과',
     farmName: '영주 별빛과수원',
     variety: '시나노골드',
     packageUnitKg: 7.5,
@@ -63,7 +63,7 @@ const _products = [
   ),
   ProductModel(
     productId: 6,
-    name: '감홍 사과 5kg',
+    name: '감홍 사과',
     farmName: '충주 온빛농장',
     variety: '감홍',
     packageUnitKg: 5,

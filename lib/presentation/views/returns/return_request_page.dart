@@ -4,6 +4,7 @@ import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/return_request_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
 
 class ReturnRequestPage extends StatefulWidget {
@@ -592,12 +593,27 @@ class _ReturnSummary extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.returnComplete,
-                    (route) => route.settings.name == AppRoutes.home,
-                    arguments: order.orderId,
-                  ),
+                  onPressed: () async {
+                    if (viewModel.reasonDetail.trim().isEmpty) {
+                      showAppAlertDialog(
+                        context,
+                        message: '반품 사유를 자세히 입력해주세요.',
+                      );
+                      return;
+                    }
+
+                    await viewModel.submitReturnRequest();
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.returnComplete,
+                      (route) => route.settings.name == AppRoutes.home,
+                      arguments: order.orderId,
+                    );
+                  },
                   icon: const Icon(Icons.assignment_return_outlined),
                   label: const Text('반품 요청'),
                 ),

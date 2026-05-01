@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/product_model.dart';
 import '../../view_models/product_detail_view_model.dart';
-import '../../widgets/harvest_slot_card.dart';
+import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/harvest_slot_card.dart';
 import '../../widgets/notice_box.dart';
 import '../../widgets/price_text.dart';
 import '../../widgets/status_badge.dart';
@@ -171,11 +173,11 @@ class _DetailHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const _PackageChoiceGrid(),
+                  _PackageChoiceGrid(viewModel: viewModel),
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      PriceText(price: product.price),
+                      PriceText(price: viewModel.selectedPackagePrice),
                       const SizedBox(width: 6),
                       Text(
                         '/ 선택 패키지',
@@ -196,7 +198,10 @@ class _DetailHero extends StatelessWidget {
                   for (final slot in viewModel.slots) ...[
                     HarvestSlotCard(
                       slot: slot,
-                      product: product,
+                      packageUnitKg: viewModel.selectedPackageUnitKg,
+                      packagePrice: viewModel.packagePriceForSlot(slot),
+                      availablePackageCount: viewModel
+                          .availablePackageCountForSlot(slot),
                       selected: viewModel.selectedSlot?.slotId == slot.slotId,
                       onTap: () => viewModel.selectSlot(slot),
                     ),
@@ -220,8 +225,18 @@ class _DetailHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   FilledButton.icon(
-                    onPressed: () =>
-                        Navigator.pushNamed(context, AppRoutes.basket),
+                    onPressed: () {
+                      final saved = viewModel.addSelectedReservationToBasket();
+                      if (!saved) {
+                        showAppAlertDialog(
+                          context,
+                          message: '예약할 상품과 수확 일정을 먼저 선택해주세요.',
+                        );
+                        return;
+                      }
+
+                      Navigator.pushNamed(context, AppRoutes.basket);
+                    },
                     icon: const Icon(Icons.add_shopping_cart),
                     label: const Text('예약함에 담기'),
                   ),
@@ -374,16 +389,18 @@ class _InfoTile extends StatelessWidget {
 }
 
 class _PackageChoiceGrid extends StatelessWidget {
-  const _PackageChoiceGrid();
+  const _PackageChoiceGrid({required this.viewModel});
+
+  final ProductDetailViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
     const choices = [
-      ('1kg', '소포장', false),
-      ('3kg', '가정용', false),
-      ('5kg', '인기', true),
-      ('7.5kg', '넉넉한 양', false),
-      ('10kg', '대용량', false),
+      (1.0, '1kg', '소포장'),
+      (3.0, '3kg', '가정용'),
+      (5.0, '5kg', '인기'),
+      (7.5, '7.5kg', '넉넉한 양'),
+      (10.0, '10kg', '대용량'),
     ];
 
     return LayoutBuilder(
@@ -399,9 +416,10 @@ class _PackageChoiceGrid extends StatelessWidget {
           children: [
             for (final choice in choices)
               _PackageChoiceCard(
-                title: choice.$1,
-                subtitle: choice.$2,
-                selected: choice.$3,
+                title: choice.$2,
+                subtitle: choice.$3,
+                selected: viewModel.selectedPackageUnitKg == choice.$1,
+                onTap: () => viewModel.selectPackageUnit(choice.$1),
               ),
           ],
         );
@@ -415,46 +433,57 @@ class _PackageChoiceCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.selected,
+    required this.onTap,
   });
 
   final String title;
   final String subtitle;
   final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFE7F3EB) : Colors.white,
-        border: Border.all(
-          color: selected ? const Color(0xFF2F6B4E) : const Color(0xFFDCE3DD),
-          width: selected ? 1.5 : 1,
-        ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF163B2B),
-              ),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFE7F3EB) : Colors.white,
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFF2F6B4E)
+                  : const Color(0xFFDCE3DD),
+              width: selected ? 1.5 : 1,
             ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: const Color(0xFF5F6C62),
-                fontWeight: FontWeight.w700,
-              ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF163B2B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF5F6C62),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -468,23 +497,68 @@ class _PackageCountSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var count = 1; count <= 5; count += 1)
-          ChoiceChip(
-            label: Text('$count'),
-            selected: viewModel.packageCount == count,
-            onSelected: (_) {
-              while (viewModel.packageCount < count && viewModel.canIncrease) {
-                viewModel.increasePackageCount();
-              }
-              while (viewModel.packageCount > count && viewModel.canDecrease) {
-                viewModel.decreasePackageCount();
-              }
-            },
-          ),
+        Row(
+          children: [
+            IconButton.outlined(
+              onPressed: viewModel.canDecrease
+                  ? viewModel.decreasePackageCount
+                  : null,
+              icon: const Icon(Icons.remove),
+              tooltip: '수량 줄이기',
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 120,
+              child: TextFormField(
+                key: ValueKey(viewModel.packageCount),
+                initialValue: '${viewModel.packageCount}',
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  suffixText: '박스',
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onChanged: (value) {
+                  final count = int.tryParse(value);
+                  if (count == null) {
+                    return;
+                  }
+
+                  if (count > viewModel.maxPackageCount) {
+                    showAppAlertDialog(context, message: '준비된 수량을 초과했습니다.');
+                  }
+                  viewModel.selectPackageCount(count);
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            IconButton.filled(
+              onPressed: viewModel.canIncrease
+                  ? viewModel.increasePackageCount
+                  : null,
+              icon: const Icon(Icons.add),
+              tooltip: '수량 늘리기',
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '최대 ${viewModel.maxPackageCount}박스까지 예약할 수 있습니다.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF5F6C62)),
+        ),
       ],
     );
   }

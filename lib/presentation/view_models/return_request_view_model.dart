@@ -61,4 +61,8 @@ class ReturnRequestViewModel extends ChangeNotifier {
     reasonDetail = value;
     notifyListeners();
   }
+
+  Future<void> submitReturnRequest() async {
+    await _orderRepository.requestReturn(_orderId);
+  }
 }

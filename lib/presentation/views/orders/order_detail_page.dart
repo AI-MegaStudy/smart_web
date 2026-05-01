@@ -185,6 +185,8 @@ class _ProgressPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isReturnRequested = order.orderStatusLabel == '반품 요청 접수';
+    final isDelivered = order.orderStatusLabel == '배송 완료' || isReturnRequested;
     final steps = [
       _ProgressStepData(
         label: '결제 완료',
@@ -211,21 +213,30 @@ class _ProgressPanel extends StatelessWidget {
         icon: Icons.check,
       ),
       _ProgressStepData(
-        label: order.orderStatusLabel,
+        label: '배송 중',
         description: '선별을 마친 사과가 배송지로 이동 중입니다.',
-        time: '현재',
+        time: '10.18 13:20',
         completed: true,
-        current: true,
+        current: !isDelivered && !isReturnRequested,
         icon: Icons.local_shipping_outlined,
       ),
-      const _ProgressStepData(
+      _ProgressStepData(
         label: '배송 완료',
-        description: '완료 후 반품 신청 가능',
-        time: '예정',
-        completed: false,
-        current: false,
+        description: '배송이 완료되어 반품 신청이 가능합니다.',
+        time: isDelivered ? '10.19 11:10' : '예정',
+        completed: isDelivered,
+        current: isDelivered && !isReturnRequested,
         icon: Icons.check,
       ),
+      if (isReturnRequested)
+        const _ProgressStepData(
+          label: '반품 요청 접수',
+          description: '상품 상태 확인 후 환불 가능 금액을 안내합니다.',
+          time: '현재',
+          completed: true,
+          current: true,
+          icon: Icons.assignment_return_outlined,
+        ),
     ];
 
     return DecoratedBox(
@@ -379,15 +390,21 @@ class _OrderSummary extends StatelessWidget {
             const SizedBox(height: 18),
             const NoticeBox(message: '수확 일정은 기상과 생육 상황에 따라 조정될 수 있습니다.'),
             const SizedBox(height: 18),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                AppRoutes.returnRequest,
-                arguments: order.orderId,
+            if (order.orderStatusLabel == '반품 요청 접수')
+              const NoticeBox(
+                icon: Icons.assignment_turned_in_outlined,
+                message: '반품 요청이 접수되었습니다. 상품 상태 확인 후 환불 가능 금액을 안내합니다.',
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.returnRequest,
+                  arguments: order.orderId,
+                ),
+                icon: const Icon(Icons.assignment_return_outlined),
+                label: const Text('반품 신청'),
               ),
-              icon: const Icon(Icons.assignment_return_outlined),
-              label: const Text('반품 신청'),
-            ),
           ],
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../view_models/auth_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 import 'login_page.dart';
 
 class SignupPage extends StatefulWidget {
@@ -81,10 +82,17 @@ class _SignupPageState extends State<SignupPage> {
                 ),
                 const SizedBox(width: 10),
                 FilledButton(
-                  onPressed: _viewModel.canSignup
-                      ? () =>
-                            Navigator.pushNamed(context, AppRoutes.verifyEmail)
-                      : null,
+                  onPressed: () {
+                    if (!_viewModel.canSignup) {
+                      showAppAlertDialog(
+                        context,
+                        message: '이메일, 비밀번호, 이름, 전화번호를 모두 입력해주세요.',
+                      );
+                      return;
+                    }
+
+                    Navigator.pushNamed(context, AppRoutes.verifyEmail);
+                  },
                   child: const Text('가입하고 인증'),
                 ),
               ],

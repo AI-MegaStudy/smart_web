@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../view_models/auth_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -67,13 +68,21 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(width: 10),
                 FilledButton(
-                  onPressed: _viewModel.canLogin
-                      ? () => Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppRoutes.home,
-                          (route) => false,
-                        )
-                      : null,
+                  onPressed: () {
+                    if (!_viewModel.canLogin) {
+                      showAppAlertDialog(
+                        context,
+                        message: '이메일과 비밀번호를 모두 입력해주세요.',
+                      );
+                      return;
+                    }
+
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.home,
+                      (route) => false,
+                    );
+                  },
                   child: const Text('로그인'),
                 ),
               ],
