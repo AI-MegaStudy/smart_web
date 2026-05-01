@@ -11,7 +11,7 @@ class EmailVerificationPage extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(title: '이메일 인증', icon: Icons.mark_email_read_outlined),
           Expanded(
             child: Center(
               child: Container(
@@ -34,10 +34,7 @@ class EmailVerificationPage extends StatelessWidget {
                     const SizedBox(height: 16),
                     const Text(
                       '이메일 인증',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 8),
                     const Text(
@@ -70,7 +67,11 @@ class EmailVerificationPage extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('인증번호를 다시 보냈습니다.')),
+                          );
+                        },
                         child: const Text('인증번호 다시 보내기'),
                       ),
                     ),

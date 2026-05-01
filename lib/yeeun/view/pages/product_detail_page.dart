@@ -44,15 +44,9 @@ class ProductDetailPage extends StatelessWidget {
                       : Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              flex: 11,
-                              child: _ProductPhoto(product: product),
-                            ),
+                            Expanded(flex: 11, child: _ProductPhoto(product: product)),
                             const SizedBox(width: 18),
-                            Expanded(
-                              flex: 10,
-                              child: _ReservationPanel(product: product),
-                            ),
+                            Expanded(flex: 10, child: _ReservationPanel(product: product)),
                           ],
                         ),
                 ),
@@ -84,13 +78,23 @@ class _ProductPhoto extends StatelessWidget {
   }
 }
 
-class _ReservationPanel extends StatelessWidget {
+class _ReservationPanel extends StatefulWidget {
   final ProductModel product;
 
   const _ReservationPanel({required this.product});
 
   @override
+  State<_ReservationPanel> createState() => _ReservationPanelState();
+}
+
+class _ReservationPanelState extends State<_ReservationPanel> {
+  int _quantity = 2;
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
+    final selectedKg = 5 * _quantity;
+
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
@@ -123,11 +127,8 @@ class _ReservationPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(product.description),
-          const SizedBox(height: 6),
-          const Text(
-            '패키지 단위 선택',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
+          const SizedBox(height: 14),
+          const Text('패키지 단위 선택', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
           const Wrap(
             spacing: 8,
@@ -150,10 +151,7 @@ class _ReservationPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            '수확 슬롯 선택',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
+          const Text('수확 슬롯 선택', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
           _HarvestSlot(
             title: '${product.harvestDate} 수확 예정',
@@ -170,12 +168,12 @@ class _ReservationPanel extends StatelessWidget {
             progress: 0.16,
           ),
           const SizedBox(height: 22),
-          const Text(
-            '박스 수량 선택',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
+          const Text('박스 수량 선택', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
-          const _QuantitySelector(),
+          _QuantitySelector(
+            selected: _quantity,
+            onChanged: (value) => setState(() => _quantity = value),
+          ),
           const SizedBox(height: 16),
           Container(
             width: double.infinity,
@@ -184,9 +182,9 @@ class _ReservationPanel extends StatelessWidget {
               color: const Color(0xffEEF0EB),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text(
-              '선택한 예약\n5kg 박스 2개, 총 10kg\n10.12-10.18 수확분으로 담깁니다.',
-              style: TextStyle(height: 1.7, fontWeight: FontWeight.w700),
+            child: Text(
+              '선택한 예약\n5kg 박스 $_quantity개, 총 ${selectedKg}kg\n${product.harvestDate} 수확분으로 담깁니다.',
+              style: const TextStyle(height: 1.7, fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 14),
@@ -201,6 +199,28 @@ class _ReservationPanel extends StatelessWidget {
               '농가가 확정한 수확 예정 범위입니다. 기상과 생육 상황에 따라 일정이 조정될 수 있습니다.',
               style: TextStyle(height: 1.5),
             ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/cart'),
+                  child: const Text('예약함 담기'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/order-form'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('바로 주문'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -233,9 +253,7 @@ class _PackageOption extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 11),
       decoration: BoxDecoration(
         color: selected ? const Color(0xffB3EFCB) : Colors.white,
-        border: Border.all(
-          color: selected ? AppColors.primary : AppColors.border,
-        ),
+        border: Border.all(color: selected ? AppColors.primary : AppColors.border),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -312,29 +330,38 @@ class _HarvestSlot extends StatelessWidget {
 }
 
 class _QuantitySelector extends StatelessWidget {
-  const _QuantitySelector();
+  final int selected;
+  final ValueChanged<int> onChanged;
+
+  const _QuantitySelector({
+    required this.selected,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: List.generate(5, (index) {
         final value = index + 1;
-        final selected = value == 2;
-        return Container(
-          width: 36,
-          height: 30,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xffCFEFDB) : Colors.white,
-            border: Border.all(color: AppColors.text),
-            borderRadius: BorderRadius.horizontal(
-              left: index == 0 ? const Radius.circular(16) : Radius.zero,
-              right: index == 4 ? const Radius.circular(16) : Radius.zero,
+        final isSelected = value == selected;
+        return InkWell(
+          onTap: () => onChanged(value),
+          child: Container(
+            width: 36,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xffCFEFDB) : Colors.white,
+              border: Border.all(color: AppColors.text),
+              borderRadius: BorderRadius.horizontal(
+                left: index == 0 ? const Radius.circular(16) : Radius.zero,
+                right: index == 4 ? const Radius.circular(16) : Radius.zero,
+              ),
             ),
-          ),
-          child: Text(
-            '$value',
-            style: const TextStyle(fontWeight: FontWeight.w900),
+            child: Text(
+              '$value',
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
           ),
         );
       }),

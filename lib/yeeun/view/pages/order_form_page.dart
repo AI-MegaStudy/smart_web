@@ -4,8 +4,16 @@ import '../../core/app_colors.dart';
 import '../../core/responsive.dart';
 import '../widgets/app_header.dart';
 
-class OrderFormPage extends StatelessWidget {
+class OrderFormPage extends StatefulWidget {
   const OrderFormPage({super.key});
+
+  @override
+  State<OrderFormPage> createState() => _OrderFormPageState();
+}
+
+class _OrderFormPageState extends State<OrderFormPage> {
+  int _selectedAddress = 0;
+  String _deliveryMemo = '문 앞에 놓아주세요';
 
   @override
   Widget build(BuildContext context) {
@@ -51,17 +59,33 @@ class OrderFormPage extends StatelessWidget {
                       isMobile
                           ? Column(
                               children: [
-                                _DeliveryForm(),
+                                _DeliveryForm(
+                                  selectedAddress: _selectedAddress,
+                                  deliveryMemo: _deliveryMemo,
+                                  onSelectAddress: _selectAddress,
+                                  onMemoChanged: _changeMemo,
+                                ),
                                 const SizedBox(height: 18),
-                                _OrderSummary(),
+                                _OrderSummary(deliveryMemo: _deliveryMemo),
                               ],
                             )
                           : Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(flex: 3, child: _DeliveryForm()),
+                                Expanded(
+                                  flex: 3,
+                                  child: _DeliveryForm(
+                                    selectedAddress: _selectedAddress,
+                                    deliveryMemo: _deliveryMemo,
+                                    onSelectAddress: _selectAddress,
+                                    onMemoChanged: _changeMemo,
+                                  ),
+                                ),
                                 const SizedBox(width: 18),
-                                const SizedBox(width: 310, child: _OrderSummary()),
+                                SizedBox(
+                                  width: 310,
+                                  child: _OrderSummary(deliveryMemo: _deliveryMemo),
+                                ),
                               ],
                             ),
                     ],
@@ -74,9 +98,30 @@ class OrderFormPage extends StatelessWidget {
       ),
     );
   }
+
+  void _selectAddress(int index) {
+    setState(() => _selectedAddress = index);
+  }
+
+  void _changeMemo(String? memo) {
+    if (memo == null) return;
+    setState(() => _deliveryMemo = memo);
+  }
 }
 
 class _DeliveryForm extends StatelessWidget {
+  final int selectedAddress;
+  final String deliveryMemo;
+  final ValueChanged<int> onSelectAddress;
+  final ValueChanged<String?> onMemoChanged;
+
+  const _DeliveryForm({
+    required this.selectedAddress,
+    required this.deliveryMemo,
+    required this.onSelectAddress,
+    required this.onMemoChanged,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -90,19 +135,22 @@ class _DeliveryForm extends StatelessWidget {
           const Text('저장된 기본 배송지를 우선 사용합니다.', style: TextStyle(fontSize: 12)),
           const SizedBox(height: 22),
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: _AddressCard(
                   title: '기본 배송지',
-                  lines: ['홍길동 · 010-1111-2222', '서울시 강남구 테헤란로 123'],
-                  selected: true,
+                  lines: const ['홍길동 · 010-1111-2222', '서울시 강남구 테헤란로 123'],
+                  selected: selectedAddress == 0,
+                  onTap: () => onSelectAddress(0),
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: _AddressCard(
                   title: '회사 배송지',
-                  lines: ['홍길동', '서울시 서초구 반포대로 45'],
+                  lines: const ['홍길동', '서울시 서초구 반포대로 45'],
+                  selected: selectedAddress == 1,
+                  onTap: () => onSelectAddress(1),
                 ),
               ),
             ],
@@ -111,14 +159,14 @@ class _DeliveryForm extends StatelessWidget {
           const Text('배송 메모 선택', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            initialValue: '문 앞에 놓아주세요',
+            initialValue: deliveryMemo,
             decoration: const InputDecoration(border: OutlineInputBorder()),
             items: const [
               DropdownMenuItem(value: '문 앞에 놓아주세요', child: Text('문 앞에 놓아주세요')),
               DropdownMenuItem(value: '배송 전 연락 주세요', child: Text('배송 전 연락 주세요')),
               DropdownMenuItem(value: '경비실에 맡겨주세요', child: Text('경비실에 맡겨주세요')),
             ],
-            onChanged: (_) {},
+            onChanged: onMemoChanged,
           ),
           const Divider(height: 28),
           const Text('필요 시 수정', style: TextStyle(fontWeight: FontWeight.w900)),
@@ -159,37 +207,45 @@ class _AddressCard extends StatelessWidget {
   final String title;
   final List<String> lines;
   final bool selected;
+  final VoidCallback onTap;
 
   const _AddressCard({
     required this.title,
     required this.lines,
-    this.selected = false,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 86,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xffB3EFCB) : Colors.white,
-        border: Border.all(color: selected ? AppColors.primary : AppColors.border),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 7),
-          ...lines.map((line) => Text(line, style: const TextStyle(fontSize: 12))),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 86,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xffB3EFCB) : Colors.white,
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 7),
+            ...lines.map((line) => Text(line, style: const TextStyle(fontSize: 12))),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _OrderSummary extends StatelessWidget {
-  const _OrderSummary();
+  final String deliveryMemo;
+
+  const _OrderSummary({required this.deliveryMemo});
 
   @override
   Widget build(BuildContext context) {
@@ -213,9 +269,9 @@ class _OrderSummary extends StatelessWidget {
               color: const Color(0xffEEF0EB),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text(
-              '배송 정보\n\n홍길동 · 010-1111-2222\n서울시 강남구 테헤란로 123\n\n문 앞에 놓아주세요',
-              style: TextStyle(height: 1.55),
+            child: Text(
+              '배송 정보\n\n홍길동 · 010-1111-2222\n서울시 강남구 테헤란로 123\n\n$deliveryMemo',
+              style: const TextStyle(height: 1.55),
             ),
           ),
           const SizedBox(height: 18),
