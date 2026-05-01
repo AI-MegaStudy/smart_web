@@ -11,17 +11,22 @@ class ProductListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = ProductViewModel();
-    final products = vm.products;
+    final products = ProductViewModel().products;
     final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(
+            title: '상품 목록',
+            icon: Icons.inventory_2_outlined,
+            showHome: true,
+            actionText: '예약함',
+            actionRoute: '/cart',
+          ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(22, 28, 22, 48),
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -31,56 +36,54 @@ class ProductListPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        '상품 목록',
+                        '수확 예정 상품',
                         style: TextStyle(
-                          fontSize: 28,
+                          color: AppColors.primary,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text('품종, 수확 예정일, 잔여 수량을 확인하고 예약할 상품을 선택하세요.'),
-                      const SizedBox(height: 20),
+                      const Text(
+                        '사과 품종과 수확 예정 범위를 함께 확인',
+                        style: TextStyle(
+                          fontSize: 29,
+                          height: 1.15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        '예약 가능한 상품을 우선 표시합니다. 패키지는 시즌 사과 판매 단위인 1kg, 3kg, 5kg, 7.5kg, 10kg 중 선택합니다.',
+                        style: TextStyle(fontSize: 14, height: 1.45),
+                      ),
+                      const SizedBox(height: 18),
                       Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: const [
-                          _FilterChip(label: '전체'),
-                          _FilterChip(label: '예약 가능'),
-                          _FilterChip(label: '이번 주 수확'),
-                          _FilterChip(label: '선물용'),
+                          _FilterChip(label: '전체', selected: true),
+                          _FilterChip(label: '후지'),
+                          _FilterChip(label: '홍로'),
+                          _FilterChip(label: '시나노골드'),
+                          _FilterChip(label: '1kg'),
+                          _FilterChip(label: '3kg'),
+                          _FilterChip(label: '5kg', selected: true),
+                          _FilterChip(label: '7.5kg'),
+                          _FilterChip(label: '10kg'),
+                          _FilterChip(label: '잔여 많은 순'),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xffEEF8EA),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.info_outline, color: AppColors.primary),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                '현재 ${products.length}개 상품이 예약 가능하며, 총 잔여 수량은 ${products.fold<int>(0, (sum, product) => sum + product.stockKg)}kg입니다.',
-                                style: const TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 22),
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: products.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: isMobile ? 1 : 3,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: isMobile ? 1.1 : 0.64,
+                          crossAxisSpacing: 18,
+                          mainAxisSpacing: 18,
+                          childAspectRatio: isMobile ? 1.05 : 0.68,
                         ),
                         itemBuilder: (_, index) {
                           return ProductCard(product: products[index]);
@@ -100,21 +103,27 @@ class ProductListPage extends StatelessWidget {
 
 class _FilterChip extends StatelessWidget {
   final String label;
+  final bool selected;
 
-  const _FilterChip({required this.label});
+  const _FilterChip({
+    required this.label,
+    this.selected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(22),
+        color: selected ? const Color(0xffCFEFDB) : Colors.white,
+        border: Border.all(
+          color: selected ? const Color(0xff9AC9A8) : AppColors.border,
+        ),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
       ),
     );
   }

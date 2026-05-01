@@ -12,6 +12,8 @@ import '../view/pages/payment_page.dart';
 import '../view/pages/order_success_page.dart';
 import '../view/pages/reservation_confirm_page.dart';
 import '../view/pages/order_history_page.dart';
+import '../view/pages/order_detail_page.dart';
+import '../view/pages/return_request_page.dart';
 import '../view/pages/reservation_form_page.dart';
 import '../view/pages/reservation_status_page.dart';
 import '../view/pages/review_page.dart';
@@ -31,6 +33,8 @@ class AppRoutes {
     '/order-success': (_) => const OrderSuccessPage(),
     '/reservation-confirm': (_) => const ReservationConfirmPage(),
     '/orders': (_) => const OrderHistoryPage(),
+    '/order-detail': (_) => const OrderDetailPage(),
+    '/return-request': (_) => const ReturnRequestPage(),
     '/reservation-form': (_) => const ReservationFormPage(),
     '/reservation-status': (_) => const ReservationStatusPage(),
     '/review': (_) => const ReviewPage(),

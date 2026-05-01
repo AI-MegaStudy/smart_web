@@ -13,79 +13,78 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final packageLabel = product.name.split(' ').last;
+
     return InkWell(
       onTap: () => Navigator.pushNamed(
         context,
         '/product-detail',
         arguments: product.id,
       ),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AspectRatio(
-              aspectRatio: 2.05,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(14),
-                ),
-                child: Image.asset(product.imageUrl, fit: BoxFit.cover),
-              ),
+              aspectRatio: 1.82,
+              child: Image.asset(product.imageUrl, fit: BoxFit.cover),
             ),
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                      if (product.reservable)
-                        const _StatusPill(text: '예약 가능'),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
                   Text(
-                    '${product.stockKg}kg 남음 · ${product.harvestDate} 수확 예정',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    product.description,
-                    maxLines: 2,
+                    product.name,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, height: 1.35),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        '$packageLabel 박스',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          decoration: TextDecoration.underline,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      _DatePill(text: product.harvestDate),
+                      Text(
+                        '잔여 ${product.stockKg}kg',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
                   Text(
                     '${_formatPrice(product.price)}원',
                     style: const TextStyle(
                       color: AppColors.primary,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
-                      fontSize: 20,
                     ),
                   ),
                 ],
@@ -105,26 +104,22 @@ class ProductCard extends StatelessWidget {
   }
 }
 
-class _StatusPill extends StatelessWidget {
+class _DatePill extends StatelessWidget {
   final String text;
 
-  const _StatusPill({required this.text});
+  const _DatePill({required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xffD8F3E3),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xffCFEFDB),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: AppColors.primary,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-        ),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
       ),
     );
   }

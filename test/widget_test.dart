@@ -6,6 +6,6 @@ void main() {
     await tester.pumpWidget(const HarvestSlotApp());
 
     expect(find.text('예약 가능한 상품'), findsOneWidget);
-    expect(find.text('프리미엄 사과 5kg'), findsOneWidget);
+    expect(find.text('후지 사과 5kg'), findsOneWidget);
   });
 }
