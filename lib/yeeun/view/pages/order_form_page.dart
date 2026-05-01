@@ -12,12 +12,28 @@ class OrderFormPage extends StatefulWidget {
 }
 
 class _OrderFormPageState extends State<OrderFormPage> {
-  int _selectedAddress = 0;
+  final List<_AddressProfile> _addresses = const [
+    _AddressProfile(
+      title: '기본 배송지',
+      receiver: '홍길동',
+      phone: '010-1111-2222',
+      address: '서울시 강남구 테헤란로 123',
+    ),
+    _AddressProfile(
+      title: '회사 배송지',
+      receiver: '홍길동',
+      phone: '010-2222-3333',
+      address: '서울시 서초구 반포대로 45',
+    ),
+  ];
+
+  int _selectedAddressIndex = 0;
   String _deliveryMemo = '문 앞에 놓아주세요';
 
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
+    final selectedAddress = _addresses[_selectedAddressIndex];
 
     return Scaffold(
       body: Column(
@@ -33,9 +49,7 @@ class _OrderFormPageState extends State<OrderFormPage> {
               padding: const EdgeInsets.fromLTRB(38, 34, 38, 48),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: Responsive.maxWidth(context),
-                  ),
+                  constraints: BoxConstraints(maxWidth: Responsive.maxWidth(context)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -50,23 +64,24 @@ class _OrderFormPageState extends State<OrderFormPage> {
                       const SizedBox(height: 8),
                       const Text(
                         '기본 배송지로 예약을 주문 전환',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w900,
-                        ),
+                        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 18),
                       isMobile
                           ? Column(
                               children: [
                                 _DeliveryForm(
-                                  selectedAddress: _selectedAddress,
+                                  addresses: _addresses,
+                                  selectedAddressIndex: _selectedAddressIndex,
                                   deliveryMemo: _deliveryMemo,
                                   onSelectAddress: _selectAddress,
                                   onMemoChanged: _changeMemo,
                                 ),
                                 const SizedBox(height: 18),
-                                _OrderSummary(deliveryMemo: _deliveryMemo),
+                                _OrderSummary(
+                                  address: selectedAddress,
+                                  deliveryMemo: _deliveryMemo,
+                                ),
                               ],
                             )
                           : Row(
@@ -75,7 +90,8 @@ class _OrderFormPageState extends State<OrderFormPage> {
                                 Expanded(
                                   flex: 3,
                                   child: _DeliveryForm(
-                                    selectedAddress: _selectedAddress,
+                                    addresses: _addresses,
+                                    selectedAddressIndex: _selectedAddressIndex,
                                     deliveryMemo: _deliveryMemo,
                                     onSelectAddress: _selectAddress,
                                     onMemoChanged: _changeMemo,
@@ -84,7 +100,10 @@ class _OrderFormPageState extends State<OrderFormPage> {
                                 const SizedBox(width: 18),
                                 SizedBox(
                                   width: 310,
-                                  child: _OrderSummary(deliveryMemo: _deliveryMemo),
+                                  child: _OrderSummary(
+                                    address: selectedAddress,
+                                    deliveryMemo: _deliveryMemo,
+                                  ),
                                 ),
                               ],
                             ),
@@ -100,7 +119,7 @@ class _OrderFormPageState extends State<OrderFormPage> {
   }
 
   void _selectAddress(int index) {
-    setState(() => _selectedAddress = index);
+    setState(() => _selectedAddressIndex = index);
   }
 
   void _changeMemo(String? memo) {
@@ -109,14 +128,30 @@ class _OrderFormPageState extends State<OrderFormPage> {
   }
 }
 
+class _AddressProfile {
+  final String title;
+  final String receiver;
+  final String phone;
+  final String address;
+
+  const _AddressProfile({
+    required this.title,
+    required this.receiver,
+    required this.phone,
+    required this.address,
+  });
+}
+
 class _DeliveryForm extends StatelessWidget {
-  final int selectedAddress;
+  final List<_AddressProfile> addresses;
+  final int selectedAddressIndex;
   final String deliveryMemo;
   final ValueChanged<int> onSelectAddress;
   final ValueChanged<String?> onMemoChanged;
 
   const _DeliveryForm({
-    required this.selectedAddress,
+    required this.addresses,
+    required this.selectedAddressIndex,
     required this.deliveryMemo,
     required this.onSelectAddress,
     required this.onMemoChanged,
@@ -135,25 +170,19 @@ class _DeliveryForm extends StatelessWidget {
           const Text('저장된 기본 배송지를 우선 사용합니다.', style: TextStyle(fontSize: 12)),
           const SizedBox(height: 22),
           Row(
-            children: [
-              Expanded(
-                child: _AddressCard(
-                  title: '기본 배송지',
-                  lines: const ['홍길동 · 010-1111-2222', '서울시 강남구 테헤란로 123'],
-                  selected: selectedAddress == 0,
-                  onTap: () => onSelectAddress(0),
+            children: List.generate(addresses.length, (index) {
+              final profile = addresses[index];
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: index == 0 ? 12 : 0),
+                  child: _AddressCard(
+                    profile: profile,
+                    selected: selectedAddressIndex == index,
+                    onTap: () => onSelectAddress(index),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _AddressCard(
-                  title: '회사 배송지',
-                  lines: const ['홍길동', '서울시 서초구 반포대로 45'],
-                  selected: selectedAddress == 1,
-                  onTap: () => onSelectAddress(1),
-                ),
-              ),
-            ],
+              );
+            }),
           ),
           const SizedBox(height: 20),
           const Text('배송 메모 선택', style: TextStyle(fontWeight: FontWeight.w900)),
@@ -204,14 +233,12 @@ class _DeliveryForm extends StatelessWidget {
 }
 
 class _AddressCard extends StatelessWidget {
-  final String title;
-  final List<String> lines;
+  final _AddressProfile profile;
   final bool selected;
   final VoidCallback onTap;
 
   const _AddressCard({
-    required this.title,
-    required this.lines,
+    required this.profile,
     required this.selected,
     required this.onTap,
   });
@@ -222,7 +249,7 @@ class _AddressCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        height: 86,
+        height: 92,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: selected ? const Color(0xffB3EFCB) : Colors.white,
@@ -232,9 +259,10 @@ class _AddressCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+            Text(profile.title, style: const TextStyle(fontWeight: FontWeight.w900)),
             const SizedBox(height: 7),
-            ...lines.map((line) => Text(line, style: const TextStyle(fontSize: 12))),
+            Text('${profile.receiver} · ${profile.phone}', style: const TextStyle(fontSize: 12)),
+            Text(profile.address, style: const TextStyle(fontSize: 12)),
           ],
         ),
       ),
@@ -243,9 +271,13 @@ class _AddressCard extends StatelessWidget {
 }
 
 class _OrderSummary extends StatelessWidget {
+  final _AddressProfile address;
   final String deliveryMemo;
 
-  const _OrderSummary({required this.deliveryMemo});
+  const _OrderSummary({
+    required this.address,
+    required this.deliveryMemo,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +302,7 @@ class _OrderSummary extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '배송 정보\n\n홍길동 · 010-1111-2222\n서울시 강남구 테헤란로 123\n\n$deliveryMemo',
+              '배송 정보\n\n${address.receiver} · ${address.phone}\n${address.address}\n\n$deliveryMemo',
               style: const TextStyle(height: 1.55),
             ),
           ),

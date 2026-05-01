@@ -14,20 +14,30 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  late List<ProductModel> _items;
   final Map<String, int> _quantities = {'1': 2, '2': 1};
+  final Set<String> _selectedIds = {'1', '2'};
+
+  @override
+  void initState() {
+    super.initState();
+    _items = ProductViewModel().products.take(2).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final products = ProductViewModel().products.take(2).toList();
     final isMobile = Responsive.isMobile(context);
-    final total = products.fold<int>(
+    final selectedItems =
+        _items.where((product) => _selectedIds.contains(product.id)).toList();
+    final total = selectedItems.fold<int>(
       0,
-      (sum, product) => sum + product.price * (_quantities[product.id] ?? 1),
+      (sum, product) => sum + product.price * _quantityOf(product.id),
     );
-    final totalCount = products.fold<int>(
+    final totalCount = selectedItems.fold<int>(
       0,
-      (sum, product) => sum + (_quantities[product.id] ?? 1),
+      (sum, product) => sum + _quantityOf(product.id),
     );
+    final allSelected = _items.isNotEmpty && _selectedIds.length == _items.length;
 
     return Scaffold(
       body: Column(
@@ -51,12 +61,22 @@ class _CartPageState extends State<CartPage> {
                       ? Column(
                           children: [
                             _CartItems(
-                              products: products,
+                              products: _items,
                               quantities: _quantities,
+                              selectedIds: _selectedIds,
+                              allSelected: allSelected,
                               onChange: _changeQuantity,
+                              onToggle: _toggleItem,
+                              onToggleAll: _toggleAll,
+                              onRemove: _removeItem,
+                              onRemoveSelected: _removeSelected,
                             ),
                             const SizedBox(height: 18),
-                            _CartSummary(totalCount: totalCount, total: total),
+                            _CartSummary(
+                              totalCount: totalCount,
+                              total: total,
+                              selectedCount: selectedItems.length,
+                            ),
                           ],
                         )
                       : Row(
@@ -65,9 +85,15 @@ class _CartPageState extends State<CartPage> {
                             Expanded(
                               flex: 2,
                               child: _CartItems(
-                                products: products,
+                                products: _items,
                                 quantities: _quantities,
+                                selectedIds: _selectedIds,
+                                allSelected: allSelected,
                                 onChange: _changeQuantity,
+                                onToggle: _toggleItem,
+                                onToggleAll: _toggleAll,
+                                onRemove: _removeItem,
+                                onRemoveSelected: _removeSelected,
                               ),
                             ),
                             const SizedBox(width: 18),
@@ -76,6 +102,7 @@ class _CartPageState extends State<CartPage> {
                               child: _CartSummary(
                                 totalCount: totalCount,
                                 total: total,
+                                selectedCount: selectedItems.length,
                               ),
                             ),
                           ],
@@ -89,10 +116,52 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
+  int _quantityOf(String productId) => _quantities[productId] ?? 1;
+
   void _changeQuantity(String productId, int delta) {
     setState(() {
-      final current = _quantities[productId] ?? 1;
+      final current = _quantityOf(productId);
       _quantities[productId] = (current + delta).clamp(1, 9);
+    });
+  }
+
+  void _toggleItem(String productId, bool? selected) {
+    setState(() {
+      if (selected ?? false) {
+        _selectedIds.add(productId);
+      } else {
+        _selectedIds.remove(productId);
+      }
+    });
+  }
+
+  void _toggleAll(bool? selected) {
+    setState(() {
+      if (selected ?? false) {
+        _selectedIds
+          ..clear()
+          ..addAll(_items.map((product) => product.id));
+      } else {
+        _selectedIds.clear();
+      }
+    });
+  }
+
+  void _removeItem(String productId) {
+    setState(() {
+      _items.removeWhere((product) => product.id == productId);
+      _selectedIds.remove(productId);
+      _quantities.remove(productId);
+    });
+  }
+
+  void _removeSelected() {
+    setState(() {
+      _items.removeWhere((product) => _selectedIds.contains(product.id));
+      for (final id in _selectedIds) {
+        _quantities.remove(id);
+      }
+      _selectedIds.clear();
     });
   }
 }
@@ -100,12 +169,24 @@ class _CartPageState extends State<CartPage> {
 class _CartItems extends StatelessWidget {
   final List<ProductModel> products;
   final Map<String, int> quantities;
+  final Set<String> selectedIds;
+  final bool allSelected;
   final void Function(String productId, int delta) onChange;
+  final void Function(String productId, bool? selected) onToggle;
+  final ValueChanged<bool?> onToggleAll;
+  final ValueChanged<String> onRemove;
+  final VoidCallback onRemoveSelected;
 
   const _CartItems({
     required this.products,
     required this.quantities,
+    required this.selectedIds,
+    required this.allSelected,
     required this.onChange,
+    required this.onToggle,
+    required this.onToggleAll,
+    required this.onRemove,
+    required this.onRemoveSelected,
   });
 
   @override
@@ -116,53 +197,84 @@ class _CartItems extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '예약함',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 16),
-          ...products.map(
-            (product) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(10),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '예약함',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                ),
               ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      product.imageUrl,
-                      width: 72,
-                      height: 58,
-                      fit: BoxFit.cover,
+              TextButton.icon(
+                onPressed: selectedIds.isEmpty ? null : onRemoveSelected,
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: const Text('선택 삭제'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (products.isNotEmpty)
+            Row(
+              children: [
+                Checkbox(value: allSelected, onChanged: onToggleAll),
+                const Text('전체 선택', style: TextStyle(fontWeight: FontWeight.w800)),
+              ],
+            ),
+          const SizedBox(height: 8),
+          if (products.isEmpty)
+            const _EmptyCart()
+          else
+            ...products.map(
+              (product) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: selectedIds.contains(product.id),
+                      onChanged: (value) => onToggle(product.id, value),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          product.name,
-                          style: const TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                        const SizedBox(height: 4),
-                        Text('${product.harvestDate} 수확 예정'),
-                      ],
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        product.imageUrl,
+                        width: 72,
+                        height: 58,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                  _StepperBox(
-                    value: quantities[product.id] ?? 1,
-                    onMinus: () => onChange(product.id, -1),
-                    onPlus: () => onChange(product.id, 1),
-                  ),
-                ],
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('${product.harvestDate} 수확 예정'),
+                        ],
+                      ),
+                    ),
+                    _StepperBox(
+                      value: quantities[product.id] ?? 1,
+                      onMinus: () => onChange(product.id, -1),
+                      onPlus: () => onChange(product.id, 1),
+                    ),
+                    IconButton(
+                      tooltip: '삭제',
+                      onPressed: () => onRemove(product.id),
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -172,10 +284,12 @@ class _CartItems extends StatelessWidget {
 class _CartSummary extends StatelessWidget {
   final int totalCount;
   final int total;
+  final int selectedCount;
 
   const _CartSummary({
     required this.totalCount,
     required this.total,
+    required this.selectedCount,
   });
 
   @override
@@ -188,6 +302,7 @@ class _CartSummary extends StatelessWidget {
         children: [
           const Text('예약 정보', style: TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 16),
+          _PriceLine(label: '선택 상품', value: '$selectedCount종'),
           _PriceLine(label: '상품 수량', value: '$totalCount박스'),
           const _PriceLine(label: '배송 예정', value: '10월 중순'),
           const Divider(height: 28),
@@ -196,7 +311,8 @@ class _CartSummary extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/order-form'),
+              onPressed:
+                  selectedCount == 0 ? null : () => Navigator.pushNamed(context, '/order-form'),
               icon: const Icon(Icons.check_circle_outline),
               label: const Text('주문서 작성'),
               style: ElevatedButton.styleFrom(
@@ -283,6 +399,27 @@ class _PriceLine extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EmptyCart extends StatelessWidget {
+  const _EmptyCart();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Text(
+        '예약함이 비어 있습니다. 상품 목록에서 예약할 상품을 담아 주세요.',
+        style: TextStyle(fontWeight: FontWeight.w800),
       ),
     );
   }

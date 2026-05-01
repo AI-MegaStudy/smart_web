@@ -25,9 +25,7 @@ class OrderHistoryPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(18, 32, 18, 48),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: Responsive.maxWidth(context),
-                  ),
+                  constraints: BoxConstraints(maxWidth: Responsive.maxWidth(context)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -42,10 +40,7 @@ class OrderHistoryPage extends StatelessWidget {
                       const SizedBox(height: 8),
                       const Text(
                         '최근 예약 주문',
-                        style: TextStyle(
-                          fontSize: 29,
-                          fontWeight: FontWeight.w900,
-                        ),
+                        style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 2),
                       _OrderRow(
@@ -55,7 +50,7 @@ class OrderHistoryPage extends StatelessWidget {
                         date: '2026.10.12',
                         status: '농가 확인 중 · 110,000원',
                         statusColor: const Color(0xffBFEAF5),
-                        linked: true,
+                        onTap: () => Navigator.pushNamed(context, '/order-detail'),
                       ),
                       _OrderRow(
                         imageUrl: products[2].imageUrl,
@@ -64,6 +59,7 @@ class OrderHistoryPage extends StatelessWidget {
                         date: '2026.09.28',
                         status: '배송 중 · 46,000원',
                         statusColor: const Color(0xffBFEAF5),
+                        onTap: () => Navigator.pushNamed(context, '/order-detail'),
                       ),
                       _OrderRow(
                         imageUrl: products[1].imageUrl,
@@ -72,6 +68,7 @@ class OrderHistoryPage extends StatelessWidget {
                         date: '2026.09.05',
                         status: '배송 완료 · 32,000원',
                         statusColor: const Color(0xffFFE48A),
+                        onTap: () => Navigator.pushNamed(context, '/order-detail'),
                       ),
                     ],
                   ),
@@ -92,7 +89,7 @@ class _OrderRow extends StatelessWidget {
   final String date;
   final String status;
   final Color statusColor;
-  final bool linked;
+  final VoidCallback onTap;
 
   const _OrderRow({
     required this.imageUrl,
@@ -101,13 +98,13 @@ class _OrderRow extends StatelessWidget {
     required this.date,
     required this.status,
     required this.statusColor,
-    this.linked = false,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: linked ? () => Navigator.pushNamed(context, '/order-detail') : null,
+      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -130,12 +127,11 @@ class _OrderRow extends StatelessWidget {
                 children: [
                   Text(
                     orderNo,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      color: linked ? Colors.blue : AppColors.text,
-                      decoration:
-                          linked ? TextDecoration.underline : TextDecoration.none,
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                   const SizedBox(height: 10),
