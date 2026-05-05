@@ -6,6 +6,7 @@ import '../../../data/models/local_basket_item_model.dart';
 import '../../../data/models/order_model.dart';
 import '../../view_models/order_detail_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 import '../../widgets/status_badge.dart';
 
@@ -41,6 +42,18 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         toolbarHeight: 72,
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
+        actions: [
+          AnimatedBuilder(
+            animation: _viewModel,
+            builder: (context, _) {
+              return FlowStatusBadge(
+                stepLabel: '배송 흐름',
+                statusLabel: _viewModel.order?.orderStatusLabel ?? '상태 확인',
+                icon: Icons.local_shipping_outlined,
+              );
+            },
+          ),
+        ],
       ),
       body: _ScreenBackground(
         child: AnimatedBuilder(
@@ -187,8 +200,10 @@ class _ProgressPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final isReturnRequested = order.orderStatusLabel == '반품 요청 접수';
     final isDelivered = order.orderStatusLabel == '배송 완료' || isReturnRequested;
+    final isShipped = order.orderStatusLabel == '배송 중' || isDelivered;
+    final isFarmChecking = order.orderStatusLabel == '농가 확인 중';
     final steps = [
-      _ProgressStepData(
+      const _ProgressStepData(
         label: '결제 완료',
         description: '카드 결제가 승인되었습니다.',
         time: '10.12 14:02',
@@ -197,32 +212,32 @@ class _ProgressPanel extends StatelessWidget {
         icon: Icons.check,
       ),
       _ProgressStepData(
-        label: '농가 승인 완료',
-        description: '점주가 수확 가능 수량을 승인했습니다.',
-        time: '10.12 16:20',
+        label: '농가 확인 중',
+        description: '농가가 수확 가능 수량을 최종 확인하고 있습니다.',
+        time: isFarmChecking ? '현재' : '10.12 16:20',
         completed: true,
-        current: false,
-        icon: Icons.check,
+        current: isFarmChecking,
+        icon: isFarmChecking ? Icons.hourglass_top : Icons.check,
       ),
       _ProgressStepData(
         label: '선별 완료',
-        description: '사과 신선도 선별 후 출고 준비 완료.',
-        time: '10.18 09:40',
-        completed: true,
+        description: '사과 신선도 선별 후 출고 준비가 완료됩니다.',
+        time: isFarmChecking ? '예정' : '10.18 09:40',
+        completed: !isFarmChecking,
         current: false,
         icon: Icons.check,
       ),
       _ProgressStepData(
         label: '배송 중',
         description: '선별을 마친 사과가 배송지로 이동 중입니다.',
-        time: '10.18 13:20',
-        completed: true,
-        current: !isDelivered && !isReturnRequested,
+        time: isShipped ? '10.18 13:20' : '예정',
+        completed: isShipped,
+        current: order.orderStatusLabel == '배송 중',
         icon: Icons.local_shipping_outlined,
       ),
       _ProgressStepData(
         label: '배송 완료',
-        description: '배송이 완료되어 반품 신청이 가능합니다.',
+        description: '배송이 완료되면 조건에 따라 반품 신청이 가능합니다.',
         time: isDelivered ? '10.19 11:10' : '예정',
         completed: isDelivered,
         current: isDelivered && !isReturnRequested,
@@ -352,6 +367,8 @@ class _OrderSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canReturn = order.orderStatusLabel == '배송 완료';
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -377,6 +394,8 @@ class _OrderSummary extends StatelessWidget {
             const Divider(height: 28),
             _SummaryRow(label: '받는 분', value: order.receiverName),
             const SizedBox(height: 10),
+            _SummaryRow(label: '배송지', value: order.shippingAddress),
+            const SizedBox(height: 10),
             _SummaryRow(label: '결제 금액', value: formatPrice(order.totalAmount)),
             const SizedBox(height: 10),
             _SummaryRow(
@@ -395,7 +414,7 @@ class _OrderSummary extends StatelessWidget {
                 icon: Icons.assignment_turned_in_outlined,
                 message: '반품 요청이 접수되었습니다. 상품 상태 확인 후 환불 가능 금액을 안내합니다.',
               )
-            else
+            else if (canReturn)
               OutlinedButton.icon(
                 onPressed: () => Navigator.pushNamed(
                   context,
@@ -404,6 +423,11 @@ class _OrderSummary extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.assignment_return_outlined),
                 label: const Text('반품 신청'),
+              )
+            else
+              const NoticeBox(
+                icon: Icons.info_outline,
+                message: '반품 신청은 배송 완료 후 조건에 따라 가능합니다.',
               ),
           ],
         ),
@@ -430,7 +454,7 @@ class _OrderItem extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          '${item.harvestStartLabel}-${item.harvestEndLabel} · ${item.packageCount}박스',
+          '${item.harvestStartLabel}-${item.harvestEndLabel} · ${item.packageCount}박스 · ${formatKg(item.reservedKg)}kg',
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF657166)),
@@ -449,8 +473,10 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        SizedBox(
+          width: 82,
           child: Text(
             label,
             style: Theme.of(
@@ -458,11 +484,14 @@ class _SummaryRow extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF657166)),
           ),
         ),
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
         ),
       ],
     );

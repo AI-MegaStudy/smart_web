@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../../core/session/mock_auth_session.dart';
-import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
 
 class MyPage extends StatelessWidget {
@@ -34,6 +33,18 @@ class MyPage extends StatelessWidget {
                 const SliverToBoxAdapter(child: _MyPageHeader()),
                 SliverToBoxAdapter(
                   child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+                    child: _SummaryCard(
+                      onRecentOrderTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.orderDetail,
+                        arguments: 8,
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -54,9 +65,9 @@ class MyPage extends StatelessWidget {
                             title: '기본 배송지 관리',
                             description: '주문서 작성 때 먼저 사용할 배송지를 확인합니다.',
                             buttonLabel: '배송지 확인',
-                            onPressed: () => showAppAlertDialog(
+                            onPressed: () => Navigator.pushNamed(
                               context,
-                              message: '배송지 추가와 카카오 주소 API 연동은 추후 연결 예정입니다.',
+                              AppRoutes.addressManage,
                             ),
                           ),
                           _MyPageActionCard(
@@ -64,9 +75,9 @@ class MyPage extends StatelessWidget {
                             title: '회원 정보',
                             description: '이름, 연락처, 이메일 정보를 확인합니다.',
                             buttonLabel: '회원 정보 보기',
-                            onPressed: () => showAppAlertDialog(
+                            onPressed: () => Navigator.pushNamed(
                               context,
-                              message: '회원 정보 수정은 백엔드 로그인 연결 후 확장할 예정입니다.',
+                              AppRoutes.memberInfo,
                             ),
                           ),
                           _MyPageActionCard(
@@ -88,8 +99,6 @@ class MyPage extends StatelessWidget {
                         if (!isWide) {
                           return Column(
                             children: [
-                              const _DefaultAddressPanel(),
-                              const SizedBox(height: 14),
                               for (final card in cards) ...[
                                 card,
                                 const SizedBox(height: 14),
@@ -98,20 +107,14 @@ class MyPage extends StatelessWidget {
                           );
                         }
 
-                        return Column(
-                          children: [
-                            const _DefaultAddressPanel(),
-                            const SizedBox(height: 16),
-                            GridView.count(
-                              crossAxisCount: 2,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              crossAxisSpacing: 14,
-                              mainAxisSpacing: 14,
-                              childAspectRatio: 2.75,
-                              children: cards,
-                            ),
-                          ],
+                        return GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 2.75,
+                          children: cards,
                         );
                       },
                     ),
@@ -132,7 +135,7 @@ class _MyPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 26, 24, 22),
+      padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -165,62 +168,154 @@ class _MyPageHeader extends StatelessWidget {
   }
 }
 
-class _DefaultAddressPanel extends StatelessWidget {
-  const _DefaultAddressPanel();
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({required this.onRecentOrderTap});
+
+  final VoidCallback onRecentOrderTap;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFDCE3DD)),
+        color: const Color(0xFF163B2B),
         borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE7F3EB),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.home_outlined,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
+        padding: const EdgeInsets.all(20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 760;
+            final account = _AccountSummary(onRecentOrderTap: onRecentOrderTap);
+            final stats = Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: const [
+                _SummaryMetric(label: '진행 중 주문', value: '2건'),
+                _SummaryMetric(label: '최근 주문 상태', value: '배송 완료'),
+                _SummaryMetric(label: '기본 배송지', value: '서울 강남구'),
+              ],
+            );
+
+            if (!isWide) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '기본 배송지',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '홍길동 · 010-1111-2222',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '서울시 강남구 테헤란로 123',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF5F6C62),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+                children: [account, const SizedBox(height: 18), stats],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(flex: 5, child: account),
+                const SizedBox(width: 18),
+                Expanded(flex: 4, child: stats),
+              ],
+            );
+          },
         ),
+      ),
+    );
+  }
+}
+
+class _AccountSummary extends StatelessWidget {
+  const _AccountSummary({required this.onRecentOrderTap});
+
+  final VoidCallback onRecentOrderTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 54,
+          height: 54,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE7F3EB),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.person_outline, color: Color(0xFF163B2B)),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '홍길동 님',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'customer@test.com',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xCCFFFFFF),
+                ),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: onRecentOrderTap,
+                icon: const Icon(Icons.local_shipping_outlined),
+                label: const Text('최근 주문 확인'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0x99FFFFFF)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryMetric extends StatelessWidget {
+  const _SummaryMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0x1AFFFFFF),
+        border: Border.all(color: const Color(0x33FFFFFF)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: const Color(0xCCFFFFFF),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }

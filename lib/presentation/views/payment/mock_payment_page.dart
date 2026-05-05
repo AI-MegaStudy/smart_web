@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/payment_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
-import '../../widgets/status_badge.dart';
 
 class MockPaymentPage extends StatefulWidget {
   const MockPaymentPage({super.key, required this.orderId});
@@ -18,6 +20,7 @@ class MockPaymentPage extends StatefulWidget {
 
 class _MockPaymentPageState extends State<MockPaymentPage> {
   late final PaymentViewModel _viewModel;
+  bool _isConfirmed = false;
 
   @override
   void initState() {
@@ -39,6 +42,13 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
         toolbarHeight: 72,
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
+        actions: const [
+          FlowStatusBadge(
+            stepLabel: '예약 흐름 4/5',
+            statusLabel: '결제 대기',
+            icon: Icons.credit_card_outlined,
+          ),
+        ],
       ),
       body: _ScreenBackground(
         child: AnimatedBuilder(
@@ -62,16 +72,23 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final isWide = constraints.maxWidth >= 980;
-                          final card = _PaymentCard(viewModel: _viewModel);
+                          final details = _PaymentDetails(
+                            items: _viewModel.items,
+                          );
                           final summary = _PaymentSummary(
                             viewModel: _viewModel,
+                            isConfirmed: _isConfirmed,
+                            onConfirmedChanged: (value) {
+                              setState(() => _isConfirmed = value);
+                            },
+                            onPay: _pay,
                           );
 
                           if (!isWide) {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                card,
+                                details,
                                 const SizedBox(height: 18),
                                 summary,
                               ],
@@ -81,7 +98,7 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(flex: 6, child: card),
+                              Expanded(flex: 6, child: details),
                               const SizedBox(width: 18),
                               Expanded(flex: 4, child: summary),
                             ],
@@ -96,6 +113,20 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
           },
         ),
       ),
+    );
+  }
+
+  Future<void> _pay() async {
+    if (!_isConfirmed) {
+      await showAppAlertDialog(context, message: '결제 전 확인 내용을 동의해주세요.');
+      return;
+    }
+
+    if (!mounted) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.orderComplete,
+      arguments: _viewModel.orderId,
     );
   }
 }
@@ -150,7 +181,7 @@ class _PageIntro extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '결제 정보 확인',
+            '결제 전 확인',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w900,
@@ -158,7 +189,7 @@ class _PageIntro extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '주문 금액을 확인하고 결제를 완료하세요',
+            '수확 예약 상품과 배송 정보를 확인하세요',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w900,
               color: const Color(0xFF163B2B),
@@ -166,7 +197,7 @@ class _PageIntro extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '주문번호 ORD-20261012-${viewModel.orderId.toString().padLeft(3, '0')} 결제를 진행합니다.',
+            '주문번호 ORD-20261012-${viewModel.orderId.toString().padLeft(3, '0')} 결제 전 수확 일정, 배송지, 결제 금액을 다시 확인합니다.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               height: 1.5,
               color: const Color(0xFF5F6C62),
@@ -178,65 +209,181 @@ class _PageIntro extends StatelessWidget {
   }
 }
 
-class _PaymentCard extends StatelessWidget {
-  const _PaymentCard({required this.viewModel});
+class _PaymentDetails extends StatelessWidget {
+  const _PaymentDetails({required this.items});
 
-  final PaymentViewModel viewModel;
+  final List<LocalBasketItemModel> items;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF163B2B), Color(0xFF307051)],
-        ),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33163B2B),
-            blurRadius: 30,
-            offset: Offset(0, 18),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionCard(
+          title: '수확 예약 상품',
+          icon: Icons.inventory_2_outlined,
+          child: Column(
+            children: [
+              for (final item in items) ...[
+                _ReservationItem(item: item),
+                if (item != items.last) const Divider(height: 24),
+              ],
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 14),
+        const _SectionCard(
+          title: '배송 정보',
+          icon: Icons.local_shipping_outlined,
+          child: Column(
+            children: [
+              _InfoRow(label: '받는 분', value: '홍길동'),
+              _InfoRow(label: '연락처', value: '010-1111-2222'),
+              _InfoRow(label: '주소', value: '서울시 강남구 테헤란로 123'),
+              _InfoRow(label: '요청사항', value: '문 앞에 놓아주세요'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        const NoticeBox(
+          message:
+              '결제 후 농가가 수확 가능 수량을 최종 확인합니다. 수확 일정은 기상과 생육 상황에 따라 조정될 수 있습니다.',
+        ),
+      ],
+    );
+  }
+}
+
+class _ReservationItem extends StatelessWidget {
+  const _ReservationItem({required this.item});
+
+  final LocalBasketItemModel item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE7F3EB),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.spa_outlined,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.productName,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${item.harvestStartLabel}-${item.harvestEndLabel} 수확 예정',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF5F6C62),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _SmallBadge(label: '${formatKg(item.packageUnitKg)}kg'),
+                  _SmallBadge(label: '${item.packageCount}박스'),
+                  _SmallBadge(label: '${formatKg(item.reservedKg)}kg'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          formatPrice(item.subtotalAmount),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentSummary extends StatelessWidget {
+  const _PaymentSummary({
+    required this.viewModel,
+    required this.isConfirmed,
+    required this.onConfirmedChanged,
+    required this.onPay,
+  });
+
+  final PaymentViewModel viewModel;
+  final bool isConfirmed;
+  final ValueChanged<bool> onConfirmedChanged;
+  final VoidCallback onPay;
+
+  @override
+  Widget build(BuildContext context) {
+    const shippingFee = 0;
+    final total = viewModel.totalAmount + shippingFee;
+
+    return Card(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const StatusBadge(label: '결제 대기'),
-            const SizedBox(height: 28),
             Text(
               '결제 수단',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white.withAlpha(210),
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 14),
-            Text(
-              '카드 간편 결제',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 28),
+            const _PaymentMethodTile(),
+            const SizedBox(height: 22),
             Text(
               '결제 금액',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withAlpha(190),
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 6),
-            Text(
-              formatPrice(viewModel.totalAmount),
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
+            const SizedBox(height: 14),
+            _SummaryRow(
+              label: '상품 금액',
+              value: formatPrice(viewModel.totalAmount),
+            ),
+            const SizedBox(height: 10),
+            _SummaryRow(label: '배송비', value: formatPrice(shippingFee)),
+            const Divider(height: 28),
+            _SummaryRow(
+              label: '최종 결제 금액',
+              value: formatPrice(total),
+              strong: true,
+            ),
+            const SizedBox(height: 18),
+            CheckboxListTile(
+              value: isConfirmed,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('수확 일정과 결제 금액을 확인했습니다.'),
+              onChanged: (value) => onConfirmedChanged(value ?? false),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: onPay,
+              icon: const Icon(Icons.credit_score_outlined),
+              label: const Text('결제하기'),
             ),
           ],
         ),
@@ -245,10 +392,50 @@ class _PaymentCard extends StatelessWidget {
   }
 }
 
-class _PaymentSummary extends StatelessWidget {
-  const _PaymentSummary({required this.viewModel});
+class _PaymentMethodTile extends StatelessWidget {
+  const _PaymentMethodTile();
 
-  final PaymentViewModel viewModel;
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF5F0),
+        border: Border.all(color: const Color(0xFFD4E1D8)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Icon(
+              Icons.radio_button_checked,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                '카드 간편결제',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+            const _SmallBadge(label: '선택됨'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
+
+  final String title;
+  final IconData icon;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -256,42 +443,22 @@ class _PaymentSummary extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    '결제 요약',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                Icon(icon, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
-                const StatusBadge(label: '확인 필요'),
               ],
             ),
             const SizedBox(height: 16),
-            _SummaryRow(label: '주문번호', value: 'ORD-20261012-008'),
-            const SizedBox(height: 10),
-            const _SummaryRow(label: '결제 수단', value: '카드'),
-            const SizedBox(height: 10),
-            _SummaryRow(
-              label: '결제 금액',
-              value: formatPrice(viewModel.totalAmount),
-            ),
-            const SizedBox(height: 18),
-            const NoticeBox(message: '결제가 완료되면 농가 확인 단계로 넘어갑니다.'),
-            const SizedBox(height: 18),
-            FilledButton.icon(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                AppRoutes.orderComplete,
-                arguments: viewModel.orderId,
-              ),
-              icon: const Icon(Icons.credit_score_outlined),
-              label: const Text('결제 완료하기'),
-            ),
+            child,
           ],
         ),
       ),
@@ -299,14 +466,65 @@ class _PaymentSummary extends StatelessWidget {
   }
 }
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.label, required this.value});
 
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 82,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF657166),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.strong = false,
+  });
+
+  final String label;
+  final String value;
+  final bool strong;
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = strong
+        ? Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: Theme.of(context).colorScheme.primary,
+          )
+        : Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900);
+
     return Row(
       children: [
         Expanded(
@@ -317,13 +535,34 @@ class _SummaryRow extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF657166)),
           ),
         ),
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-        ),
+        Text(value, style: textStyle),
       ],
+    );
+  }
+}
+
+class _SmallBadge extends StatelessWidget {
+  const _SmallBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F1ED),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: const Color(0xFF4B584D),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
     );
   }
 }

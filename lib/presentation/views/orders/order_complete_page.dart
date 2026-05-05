@@ -4,6 +4,7 @@ import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../view_models/order_complete_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 import '../../widgets/status_badge.dart';
 
@@ -39,6 +40,13 @@ class _OrderCompletePageState extends State<OrderCompletePage> {
         toolbarHeight: 72,
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
+        actions: const [
+          FlowStatusBadge(
+            stepLabel: '예약 흐름 5/5',
+            statusLabel: '주문 완료',
+            icon: Icons.check_circle_outline,
+          ),
+        ],
       ),
       body: _ScreenBackground(
         child: AnimatedBuilder(
@@ -125,7 +133,7 @@ class _CompleteCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '${viewModel.orderNumber} 결제가 완료되었습니다. 농가 확인과 배송 준비 상태를 주문 상세에서 계속 안내해드립니다.',
+              '${viewModel.orderNumber} 결제가 완료되었습니다. 이제 농가가 수확 가능 수량을 최종 확인하고, 이후 선별과 배송 상태를 주문 상세에서 안내합니다.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 height: 1.5,
@@ -163,7 +171,7 @@ class _CompleteCard extends StatelessWidget {
             const SizedBox(height: 18),
             const NoticeBox(
               message:
-                  '결제 후 농가가 수확 가능 수량을 확인합니다. 이후 주문 상세에서 진행 상태를 확인할 수 있습니다.',
+                  '결제 후 농가가 수확 가능 수량을 최종 확인합니다. 수확 일정은 기상과 생육 상황에 따라 조정될 수 있습니다.',
             ),
             const SizedBox(height: 24),
             Wrap(

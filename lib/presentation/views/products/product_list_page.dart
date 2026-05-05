@@ -92,7 +92,12 @@ class _ProductListPageState extends State<ProductListPage> {
                           return GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                            padding: EdgeInsets.fromLTRB(
+                              columnCount == 1 ? 16 : 24,
+                              0,
+                              columnCount == 1 ? 16 : 24,
+                              columnCount == 1 ? 28 : 40,
+                            ),
                             itemCount: _viewModel.filteredProducts.length,
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
@@ -100,8 +105,8 @@ class _ProductListPageState extends State<ProductListPage> {
                                   crossAxisSpacing: 14,
                                   mainAxisSpacing: 14,
                                   childAspectRatio: columnCount == 1
-                                      ? 0.72
-                                      : 0.78,
+                                      ? 1.03
+                                      : 0.82,
                                 ),
                             itemBuilder: (context, index) {
                               final product =
@@ -200,53 +205,62 @@ class _PageIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 18),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 900;
-          final title = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _Eyebrow(text: '수확 예정 사과'),
-              const SizedBox(height: 8),
-              Text(
-                '햇살을 머금은 사과를 수확 일정에 맞춰 예약하세요',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF163B2B),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '농가가 확정한 수확 예정 기간과 포장 단위를 확인하고, 가장 신선한 시기에 받아보세요.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  height: 1.5,
-                  color: const Color(0xFF5F6C62),
-                ),
-              ),
-            ],
-          );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 900;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            isWide ? 24 : 16,
+            isWide ? 24 : 16,
+            isWide ? 24 : 16,
+            isWide ? 18 : 12,
+          ),
+          child: Builder(
+            builder: (context) {
+              final title = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _Eyebrow(text: '수확 예정 사과'),
+                  const SizedBox(height: 8),
+                  Text(
+                    '햇살을 머금은 사과를 수확 일정에 맞춰 예약하세요',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF163B2B),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '농가가 확정한 수확 예정 기간과 포장 단위를 확인하고, 가장 신선한 시기에 받아보세요.',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      height: 1.5,
+                      color: const Color(0xFF5F6C62),
+                    ),
+                  ),
+                ],
+              );
 
-          final summary = _SummaryPanel(viewModel: viewModel);
+              final summary = _SummaryPanel(viewModel: viewModel);
 
-          if (!isWide) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [title, const SizedBox(height: 18), summary],
-            );
-          }
+              if (!isWide) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [title, const SizedBox(height: 18), summary],
+                );
+              }
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 5, child: title),
-              const SizedBox(width: 18),
-              Expanded(flex: 3, child: summary),
-            ],
-          );
-        },
-      ),
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 5, child: title),
+                  const SizedBox(width: 18),
+                  Expanded(flex: 3, child: summary),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -323,7 +337,7 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -339,7 +353,7 @@ class _FilterBar extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           const NoticeBox(
             message: '농가가 확정한 수확 예정 범위입니다. 기상과 생육 상황에 따라 일정이 조정될 수 있습니다.',
           ),

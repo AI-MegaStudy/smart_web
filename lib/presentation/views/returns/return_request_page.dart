@@ -6,6 +6,7 @@ import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/return_request_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 
 class ReturnRequestPage extends StatefulWidget {
   const ReturnRequestPage({super.key, required this.orderId});
@@ -39,6 +40,13 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
         toolbarHeight: 72,
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
+        actions: const [
+          FlowStatusBadge(
+            stepLabel: '반품 흐름 1/2',
+            statusLabel: '반품 신청',
+            icon: Icons.assignment_return_outlined,
+          ),
+        ],
       ),
       body: _ScreenBackground(
         child: AnimatedBuilder(

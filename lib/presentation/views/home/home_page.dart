@@ -104,7 +104,12 @@ class _HomePageState extends State<HomePage> {
                             return GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                              padding: EdgeInsets.fromLTRB(
+                                columnCount == 1 ? 16 : 24,
+                                0,
+                                columnCount == 1 ? 16 : 24,
+                                columnCount == 1 ? 16 : 24,
+                              ),
                               itemCount: _viewModel.featuredProducts.length,
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
@@ -112,8 +117,8 @@ class _HomePageState extends State<HomePage> {
                                     crossAxisSpacing: 14,
                                     mainAxisSpacing: 14,
                                     childAspectRatio: columnCount == 1
-                                        ? 0.72
-                                        : 0.78,
+                                        ? 1.03
+                                        : 0.82,
                                   ),
                               itemBuilder: (context, index) {
                                 final product =
@@ -122,7 +127,8 @@ class _HomePageState extends State<HomePage> {
                                   product: product,
                                   onTap: () => Navigator.pushNamed(
                                     context,
-                                    AppRoutes.products,
+                                    AppRoutes.productDetail,
+                                    arguments: product.productId,
                                   ),
                                 );
                               },
@@ -273,169 +279,185 @@ class _HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 900;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 900;
 
-          final copy = Padding(
-            padding: EdgeInsets.fromLTRB(
-              isWide ? 34 : 18,
-              isWide ? 42 : 28,
-              isWide ? 24 : 18,
-              isWide ? 42 : 20,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const _Label(
-                  icon: Icons.event_available,
-                  text: '농가 확정 수확 슬롯 예약',
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '수확일이 확정된 사과만 예약하세요',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    height: 1.08,
-                    color: const Color(0xFF163B2B),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '농가가 직접 확정한 수확 예정 범위와 예약 가능 수량을 기준으로 주문하고 배송 상태까지 확인합니다.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    height: 1.62,
-                    color: const Color(0xFF56645B),
-                  ),
-                ),
-                const SizedBox(height: 22),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: onProductsTap,
-                      icon: const Icon(Icons.inventory_2_outlined),
-                      label: const Text('예약 상품 보기'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onFeaturedTap,
-                      icon: const Icon(Icons.spa_outlined),
-                      label: const Text('대표 상품'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-
-          // ignore: unused_local_variable
-          final image = Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.network(
-                'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?auto=format&fit=crop&w=1300&q=80',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: const Color(0xFFE3E9DF),
-                    child: const Center(
-                      child: Icon(Icons.image_not_supported_outlined, size: 48),
-                    ),
-                  );
-                },
-              ),
-              Positioned(
-                left: isWide ? null : 16,
-                right: isWide ? 18 : null,
-                bottom: 18,
-                child: Container(
-                  width: 185,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xDD163B2B),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '10.12-10.18',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        '충주 햇살농원 후지 사과 수확 예정',
-                        style: TextStyle(
-                          color: Color(0xCCFFFFFF),
-                          fontSize: 12,
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-
-          if (!isWide) {
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFFF8F4DF), Color(0xFFE7F3EB)],
-                  ),
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            isWide ? 24 : 16,
+            isWide ? 24 : 16,
+            isWide ? 24 : 16,
+            isWide ? 12 : 8,
+          ),
+          child: Builder(
+            builder: (context) {
+              final copy = Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isWide ? 34 : 18,
+                  isWide ? 42 : 22,
+                  isWide ? 24 : 18,
+                  isWide ? 42 : 18,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      height: 205,
-                      child: _HeroImageSlider(isWide: isWide),
+                    const _Label(
+                      icon: Icons.event_available,
+                      text: '농가 확정 수확 슬롯 예약',
                     ),
-                    copy,
+                    SizedBox(height: isWide ? 10 : 8),
+                    Text(
+                      '수확일이 확정된 사과만 예약하세요',
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            height: 1.08,
+                            color: const Color(0xFF163B2B),
+                          ),
+                    ),
+                    SizedBox(height: isWide ? 12 : 8),
+                    Text(
+                      '농가가 직접 확정한 수확 예정 범위와 예약 가능 수량을 기준으로 주문하고 배송 상태까지 확인합니다.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        height: 1.62,
+                        color: const Color(0xFF56645B),
+                      ),
+                    ),
+                    SizedBox(height: isWide ? 22 : 16),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: onProductsTap,
+                          icon: const Icon(Icons.inventory_2_outlined),
+                          label: const Text('예약 상품 보기'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: onFeaturedTap,
+                          icon: const Icon(Icons.spa_outlined),
+                          label: const Text('대표 상품'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-            );
-          }
+              );
 
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFF8F4DF), Color(0xFFE7F3EB)],
+              // ignore: unused_local_variable
+              final image = Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?auto=format&fit=crop&w=1300&q=80',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: const Color(0xFFE3E9DF),
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            size: 48,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    left: isWide ? null : 16,
+                    right: isWide ? 18 : null,
+                    bottom: 18,
+                    child: Container(
+                      width: 185,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xDD163B2B),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '10.12-10.18',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            '충주 햇살농원 후지 사과 수확 예정',
+                            style: TextStyle(
+                              color: Color(0xCCFFFFFF),
+                              fontSize: 12,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+
+              if (!isWide) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFFF8F4DF), Color(0xFFE7F3EB)],
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          height: 178,
+                          child: _HeroImageSlider(isWide: isWide),
+                        ),
+                        copy,
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFF8F4DF), Color(0xFFE7F3EB)],
+                    ),
+                  ),
+                  child: SizedBox(
+                    height: 360,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(flex: 105, child: copy),
+                        Expanded(
+                          flex: 95,
+                          child: _HeroImageSlider(isWide: isWide),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: SizedBox(
-                height: 360,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(flex: 105, child: copy),
-                    Expanded(flex: 95, child: _HeroImageSlider(isWide: isWide)),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -758,7 +780,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 36, 24, 18),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
       child: Row(
         children: [
           Expanded(
@@ -772,7 +794,7 @@ class _SectionHeader extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -2538,6 +2560,11 @@ class _HomeTopBar extends StatelessWidget {
                         compact: isCompact,
                       ),
                       _TopAction(
+                        label: '마이페이지',
+                        routeName: AppRoutes.myPage,
+                        compact: isCompact,
+                      ),
+                      _TopAction(
                         label: '회원가입',
                         routeName: AppRoutes.signup,
                         compact: isCompact,
@@ -2575,22 +2602,32 @@ class _TopAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = MockAuthSession.isLoggedIn;
+    if ((routeName == AppRoutes.signup || routeName == AppRoutes.login) &&
+        isLoggedIn) {
+      return const SizedBox.shrink();
+    }
+
     final effectiveLabel = switch (routeName) {
       AppRoutes.products => '상품',
       AppRoutes.myOrders => '내 주문',
-      AppRoutes.signup when isLoggedIn => '마이페이지',
+      AppRoutes.myPage => '마이페이지',
       AppRoutes.signup => '회원가입',
-      AppRoutes.login when isLoggedIn => '로그아웃',
       AppRoutes.login => '로그인',
       _ => label,
     };
-    final effectiveRouteName = switch (routeName) {
-      AppRoutes.signup when isLoggedIn => AppRoutes.myPage,
-      _ => routeName,
-    };
 
     return TextButton(
-      onPressed: () {
+      onPressed: () async {
+        if (routeName == AppRoutes.myPage && !isLoggedIn) {
+          await showAppAlertDialog(
+            context,
+            message: '마이페이지는 로그인이 필요합니다. 로그인 화면으로 이동합니다.',
+          );
+          if (!context.mounted) return;
+          Navigator.pushNamed(context, AppRoutes.login);
+          return;
+        }
+
         if (routeName == AppRoutes.login && isLoggedIn) {
           MockAuthSession.logout();
           Navigator.pushNamedAndRemoveUntil(
@@ -2601,7 +2638,7 @@ class _TopAction extends StatelessWidget {
           return;
         }
 
-        Navigator.pushNamed(context, effectiveRouteName);
+        Navigator.pushNamed(context, routeName);
       },
       style: TextButton.styleFrom(
         minimumSize: Size(compact ? 48 : 64, 40),

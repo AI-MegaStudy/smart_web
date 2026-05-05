@@ -5,6 +5,7 @@ import '../../../core/utils/formatters.dart';
 import '../../view_models/checkout_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -39,6 +40,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
         toolbarHeight: 72,
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
+        actions: const [
+          FlowStatusBadge(
+            stepLabel: '예약 흐름 3/5',
+            statusLabel: '주문서 작성',
+            icon: Icons.edit_note_outlined,
+          ),
+        ],
       ),
       body: _ScreenBackground(
         child: AnimatedBuilder(

@@ -5,6 +5,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/reservation_confirm_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 import '../../widgets/status_badge.dart';
 
@@ -38,6 +39,13 @@ class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
         toolbarHeight: 72,
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
+        actions: const [
+          FlowStatusBadge(
+            stepLabel: '예약 흐름 2/5',
+            statusLabel: '예약 확인',
+            icon: Icons.fact_check_outlined,
+          ),
+        ],
       ),
       body: _ScreenBackground(
         child: AnimatedBuilder(

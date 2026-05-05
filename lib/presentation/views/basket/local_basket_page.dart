@@ -5,6 +5,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/local_basket_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 import '../../widgets/status_badge.dart';
 
@@ -39,6 +40,11 @@ class _LocalBasketPageState extends State<LocalBasketPage> {
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
         actions: [
+          const FlowStatusBadge(
+            stepLabel: '예약 흐름 1/5',
+            statusLabel: '담아둔 상품',
+            icon: Icons.shopping_basket_outlined,
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 20),
             child: OutlinedButton.icon(

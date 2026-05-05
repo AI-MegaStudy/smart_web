@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/flow_status_badge.dart';
 
 class ReturnCompletePage extends StatelessWidget {
   const ReturnCompletePage({super.key, required this.orderId});
@@ -18,6 +19,13 @@ class ReturnCompletePage extends StatelessWidget {
         toolbarHeight: 72,
         titleSpacing: 14,
         title: const BrandAppBarTitle(),
+        actions: const [
+          FlowStatusBadge(
+            stepLabel: '반품 흐름 2/2',
+            statusLabel: '접수 완료',
+            icon: Icons.task_alt_outlined,
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(

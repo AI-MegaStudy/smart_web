@@ -15,7 +15,7 @@ class OrderRepository {
       OrderModel(
         orderId: 8,
         orderNumber: 'ORD-20261012-008',
-        orderStatusLabel: _statusLabelFor(8, fallback: '배송 완료'),
+        orderStatusLabel: _statusLabelFor(8, fallback: '농가 확인 중'),
         receiverName: '홍길동',
         shippingAddress: '서울시 강남구 테헤란로 123',
         carrierName: 'CJ대한통운',
@@ -53,7 +53,7 @@ class OrderRepository {
       orderNumber: 'ORD-20261012-${orderId.toString().padLeft(3, '0')}',
       orderStatusLabel: _statusLabelFor(
         orderId,
-        fallback: orderId == 8 ? '배송 완료' : '배송 중',
+        fallback: orderId == 8 ? '농가 확인 중' : '배송 중',
       ),
       receiverName: '홍길동',
       shippingAddress: '서울시 강남구 테헤란로 123',
