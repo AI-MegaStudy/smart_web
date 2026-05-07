@@ -4,6 +4,7 @@ import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/reservation_confirm_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
 import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
@@ -18,6 +19,7 @@ class ReservationConfirmPage extends StatefulWidget {
 
 class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
   late final ReservationConfirmViewModel _viewModel;
+  bool _hasShownAvailabilityAlert = false;
 
   @override
   void initState() {
@@ -55,6 +57,21 @@ class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            if (_viewModel.hasBlockingIssue && !_hasShownAvailabilityAlert) {
+              _hasShownAvailabilityAlert = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                if (!mounted) {
+                  return;
+                }
+
+                await showAppAlertDialog(
+                  context,
+                  message:
+                      '현재 예약 가능한 수량이 변경되었습니다. 예약 내용을 확인한 뒤 다시 진행해주세요.',
+                );
+              });
+            }
+
             return CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
@@ -71,6 +88,7 @@ class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
                           final isWide = constraints.maxWidth >= 980;
                           final list = _ReservationItemList(
                             items: _viewModel.items,
+                            issueForItem: _viewModel.issueForItem,
                           );
                           final summary = _ReservationSummary(
                             viewModel: _viewModel,
@@ -198,9 +216,13 @@ class _PageIntro extends StatelessWidget {
 }
 
 class _ReservationItemList extends StatelessWidget {
-  const _ReservationItemList({required this.items});
+  const _ReservationItemList({
+    required this.items,
+    required this.issueForItem,
+  });
 
   final List<LocalBasketItemModel> items;
+  final String? Function(LocalBasketItemModel item) issueForItem;
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +230,7 @@ class _ReservationItemList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final item in items) ...[
-          _ReservationItemCard(item: item),
+          _ReservationItemCard(item: item, issueMessage: issueForItem(item)),
           const SizedBox(height: 12),
         ],
       ],
@@ -217,9 +239,13 @@ class _ReservationItemList extends StatelessWidget {
 }
 
 class _ReservationItemCard extends StatelessWidget {
-  const _ReservationItemCard({required this.item});
+  const _ReservationItemCard({
+    required this.item,
+    required this.issueMessage,
+  });
 
   final LocalBasketItemModel item;
+  final String? issueMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +270,7 @@ class _ReservationItemCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const StatusBadge(label: '확인 중'),
+                StatusBadge(label: issueMessage == null ? '확인 중' : '재확인 필요'),
               ],
             ),
             const SizedBox(height: 8),
@@ -275,6 +301,17 @@ class _ReservationItemCard extends StatelessWidget {
               message: '주문서 작성 전 수확 가능 수량과 금액을 한 번 더 확인합니다.',
               icon: Icons.verified_outlined,
             ),
+            if (issueMessage != null) ...[
+              const SizedBox(height: 12),
+              NoticeBox(
+                message: issueMessage!,
+                icon: Icons.error_outline,
+                backgroundColor: const Color(0xFFFFF1ED),
+                borderColor: const Color(0xFFF3C5B8),
+                iconColor: const Color(0xFFBE3A20),
+                textColor: const Color(0xFF7A2516),
+              ),
+            ],
           ],
         ),
       ),
@@ -289,17 +326,52 @@ class _ReservationSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFAF1),
+        border: Border.all(color: const Color(0xFFE6D7B8)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5E5B8),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '예약 요약',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: const Color(0xFF6A4B16),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(
               '예약 내용 요약',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF163B2B),
+              ),
             ),
             const SizedBox(height: 16),
             _InfoRow(label: '담은 상품', value: '${viewModel.items.length}개'),
@@ -322,16 +394,40 @@ class _ReservationSummary extends StatelessWidget {
               message: '다음 단계에서 배송 정보를 입력하고 결제 전 금액을 다시 확인합니다.',
               icon: Icons.verified_outlined,
             ),
+            if (viewModel.hasBlockingIssue) ...[
+              const SizedBox(height: 12),
+              const NoticeBox(
+                message: '예약 가능한 수량이 바뀐 항목이 있어 주문서 작성으로 바로 넘어갈 수 없습니다. 예약함에서 수량을 다시 확인해주세요.',
+                icon: Icons.error_outline,
+                backgroundColor: Color(0xFFFFF1ED),
+                borderColor: Color(0xFFF3C5B8),
+                iconColor: Color(0xFFBE3A20),
+                textColor: Color(0xFF7A2516),
+              ),
+            ],
             const SizedBox(height: 18),
             FilledButton.icon(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                AppRoutes.checkout,
-                arguments: 5,
-              ),
+              onPressed: viewModel.hasBlockingIssue
+                  ? null
+                  : () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.checkout,
+                      arguments: 5,
+                    ),
               icon: const Icon(Icons.check_circle_outline),
               label: const Text('주문서 작성하기'),
             ),
+            if (viewModel.hasBlockingIssue) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.basket,
+                ),
+                icon: const Icon(Icons.shopping_basket_outlined),
+                label: const Text('예약함으로 돌아가기'),
+              ),
+            ],
           ],
         ),
       ),

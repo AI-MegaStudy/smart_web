@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../app/router.dart';
+import '../../../core/session/mock_auth_session.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/product_model.dart';
 import '../../view_models/product_detail_view_model.dart';
@@ -225,7 +226,18 @@ class _DetailHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   FilledButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
+                      if (!MockAuthSession.isLoggedIn) {
+                        await showAppAlertDialog(
+                          context,
+                          message:
+                              '예약은 로그인 후 진행할 수 있습니다. 로그인 화면으로 이동합니다.',
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pushNamed(context, AppRoutes.login);
+                        return;
+                      }
+
                       final saved = viewModel.addSelectedReservationToBasket();
                       if (!saved) {
                         showAppAlertDialog(

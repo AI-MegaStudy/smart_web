@@ -18,7 +18,7 @@ class OrderDetailViewModel extends ChangeNotifier {
   OrderModel? get order => _order;
 
   List<String> get progressLabels {
-    return const ['결제 완료', '농가 승인 완료', '선별 완료', '배송 중', '배송 완료'];
+    return const ['결제 완료', '농가 확인 중', '발송 준비', '배송 중', '배송 완료'];
   }
 
   Future<void> load() async {

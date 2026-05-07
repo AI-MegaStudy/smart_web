@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../../core/session/mock_auth_session.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/local_basket_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
 import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
@@ -540,10 +542,23 @@ class _BasketSummary extends StatelessWidget {
             FilledButton.icon(
               onPressed: viewModel.items.isEmpty
                   ? null
-                  : () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.reservationConfirm,
-                    ),
+                  : () async {
+                      if (!MockAuthSession.isLoggedIn) {
+                        await showAppAlertDialog(
+                          context,
+                          message:
+                              '예약은 로그인 후 진행할 수 있습니다. 로그인 화면으로 이동합니다.',
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pushNamed(context, AppRoutes.login);
+                        return;
+                      }
+
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.reservationConfirm,
+                      );
+                    },
               icon: const Icon(Icons.fact_check_outlined),
               label: const Text('예약 진행하기'),
             ),

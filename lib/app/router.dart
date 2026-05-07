@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/session/mock_auth_session.dart';
 import '../presentation/views/home/home_page.dart';
 import '../presentation/views/basket/local_basket_page.dart';
 import '../presentation/views/checkout/checkout_page.dart';
@@ -63,7 +64,9 @@ class AppRoutes {
       orderComplete => OrderCompletePage(
         orderId: settings.arguments is int ? settings.arguments as int : 8,
       ),
-      myPage => const MyPage(),
+      myPage => MockAuthSession.isLoggedIn
+          ? const MyPage()
+          : const LoginPage(),
       addressManage => const AddressManagePage(),
       addressAdd => AddressAddPage(isEdit: settings.arguments == 'edit'),
       memberInfo => const MemberInfoPage(),

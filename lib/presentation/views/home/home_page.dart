@@ -2498,6 +2498,7 @@ class _HomeTopBar extends StatelessWidget {
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 760;
         final brandWidth = isCompact ? 180.0 : 260.0;
+        final isLoggedIn = MockAuthSession.isLoggedIn;
         return Row(
           children: [
             SizedBox(
@@ -2559,21 +2560,25 @@ class _HomeTopBar extends StatelessWidget {
                         routeName: AppRoutes.myOrders,
                         compact: isCompact,
                       ),
-                      _TopAction(
-                        label: '마이페이지',
-                        routeName: AppRoutes.myPage,
-                        compact: isCompact,
-                      ),
-                      _TopAction(
-                        label: '회원가입',
-                        routeName: AppRoutes.signup,
-                        compact: isCompact,
-                      ),
-                      _TopAction(
-                        label: '로그인',
-                        routeName: AppRoutes.login,
-                        compact: isCompact,
-                      ),
+                      if (isLoggedIn)
+                        _TopAction(
+                          label: '마이페이지',
+                          routeName: AppRoutes.myPage,
+                          compact: isCompact,
+                        ),
+                      if (!isLoggedIn)
+                        _TopAction(
+                          label: '회원가입',
+                          routeName: AppRoutes.signup,
+                          compact: isCompact,
+                        ),
+                      if (!isLoggedIn)
+                        _TopAction(
+                          label: '로그인',
+                          routeName: AppRoutes.login,
+                          compact: isCompact,
+                        ),
+                      if (isLoggedIn) _LogoutAction(compact: isCompact),
                       SizedBox(width: isCompact ? 4 : 8),
                       _BasketAction(compact: isCompact),
                     ],
@@ -2601,12 +2606,6 @@ class _TopAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLoggedIn = MockAuthSession.isLoggedIn;
-    if ((routeName == AppRoutes.signup || routeName == AppRoutes.login) &&
-        isLoggedIn) {
-      return const SizedBox.shrink();
-    }
-
     final effectiveLabel = switch (routeName) {
       AppRoutes.products => '상품',
       AppRoutes.myOrders => '내 주문',
@@ -2617,35 +2616,45 @@ class _TopAction extends StatelessWidget {
     };
 
     return TextButton(
-      onPressed: () async {
-        if (routeName == AppRoutes.myPage && !isLoggedIn) {
-          await showAppAlertDialog(
-            context,
-            message: '마이페이지는 로그인이 필요합니다. 로그인 화면으로 이동합니다.',
-          );
-          if (!context.mounted) return;
-          Navigator.pushNamed(context, AppRoutes.login);
-          return;
-        }
-
-        if (routeName == AppRoutes.login && isLoggedIn) {
-          MockAuthSession.logout();
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.home,
-            (route) => false,
-          );
-          return;
-        }
-
-        Navigator.pushNamed(context, routeName);
-      },
+      onPressed: () => Navigator.pushNamed(context, routeName),
       style: TextButton.styleFrom(
         minimumSize: Size(compact ? 48 : 64, 40),
         padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 14),
       ),
       child: Text(
         effectiveLabel,
+        maxLines: 1,
+        style: TextStyle(
+          fontSize: compact ? 13 : 14,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutAction extends StatelessWidget {
+  const _LogoutAction({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        MockAuthSession.logout();
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (route) => false,
+        );
+      },
+      style: TextButton.styleFrom(
+        minimumSize: Size(compact ? 48 : 64, 40),
+        padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 14),
+      ),
+      child: Text(
+        '로그아웃',
         maxLines: 1,
         style: TextStyle(
           fontSize: compact ? 13 : 14,

@@ -133,7 +133,7 @@ class _CompleteCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '${viewModel.orderNumber} 결제가 완료되었습니다. 이제 농가가 수확 가능 수량을 최종 확인하고, 이후 선별과 배송 상태를 주문 상세에서 안내합니다.',
+              '${viewModel.orderNumber} 결제가 완료되었습니다. 이제 농가가 수확 가능 수량을 최종 확인하고, 이후 발송 준비와 배송 상태를 주문 상세에서 안내합니다.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 height: 1.5,

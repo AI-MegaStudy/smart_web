@@ -220,8 +220,8 @@ class _ProgressPanel extends StatelessWidget {
         icon: isFarmChecking ? Icons.hourglass_top : Icons.check,
       ),
       _ProgressStepData(
-        label: '선별 완료',
-        description: '사과 신선도 선별 후 출고 준비가 완료됩니다.',
+        label: '발송 준비',
+        description: '농가 확인이 끝난 상품을 선별하고 발송을 준비하고 있습니다.',
         time: isFarmChecking ? '예정' : '10.18 09:40',
         completed: !isFarmChecking,
         current: false,
@@ -229,7 +229,7 @@ class _ProgressPanel extends StatelessWidget {
       ),
       _ProgressStepData(
         label: '배송 중',
-        description: '선별을 마친 사과가 배송지로 이동 중입니다.',
+        description: '발송이 시작된 사과가 배송지로 이동 중입니다.',
         time: isShipped ? '10.18 13:20' : '예정',
         completed: isShipped,
         current: order.orderStatusLabel == '배송 중',
@@ -368,6 +368,11 @@ class _OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canReturn = order.orderStatusLabel == '배송 완료';
+    final hasShipmentInfo = order.orderStatusLabel == '배송 중' ||
+        order.orderStatusLabel == '배송 완료' ||
+        order.orderStatusLabel == '반품 요청 접수';
+    final carrierDisplay = hasShipmentInfo ? order.carrierName : '배송 준비 중';
+    final trackingDisplay = hasShipmentInfo ? order.trackingNumber : '송장번호 준비 중';
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -403,9 +408,9 @@ class _OrderSummary extends StatelessWidget {
               value: '${formatKg(order.totalReservedKg)}kg',
             ),
             const SizedBox(height: 10),
-            _SummaryRow(label: '택배사', value: order.carrierName),
+            _SummaryRow(label: '택배사', value: carrierDisplay),
             const SizedBox(height: 10),
-            _SummaryRow(label: '송장번호', value: order.trackingNumber),
+            _SummaryRow(label: '송장번호', value: trackingDisplay),
             const SizedBox(height: 18),
             const NoticeBox(message: '수확 일정은 기상과 생육 상황에 따라 조정될 수 있습니다.'),
             const SizedBox(height: 18),
