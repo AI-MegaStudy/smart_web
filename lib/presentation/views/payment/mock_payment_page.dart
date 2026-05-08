@@ -21,6 +21,7 @@ class MockPaymentPage extends StatefulWidget {
 class _MockPaymentPageState extends State<MockPaymentPage> {
   late final PaymentViewModel _viewModel;
   bool _isConfirmed = false;
+  String _selectedPaymentMethod = '카드 간편결제';
 
   @override
   void initState() {
@@ -78,8 +79,12 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
                           final summary = _PaymentSummary(
                             viewModel: _viewModel,
                             isConfirmed: _isConfirmed,
+                            selectedPaymentMethod: _selectedPaymentMethod,
                             onConfirmedChanged: (value) {
                               setState(() => _isConfirmed = value);
+                            },
+                            onPaymentMethodChanged: (value) {
+                              setState(() => _selectedPaymentMethod = value);
                             },
                             onPay: _pay,
                           );
@@ -119,6 +124,14 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
   Future<void> _pay() async {
     if (!_isConfirmed) {
       await showAppAlertDialog(context, message: '결제 전 확인 내용을 동의해주세요.');
+      return;
+    }
+
+    if (_selectedPaymentMethod != '카드 간편결제') {
+      await showAppAlertDialog(
+        context,
+        message: '해당 결제 수단은 준비 중입니다. 현재는 카드 간편결제로 시연할 수 있습니다.',
+      );
       return;
     }
 
@@ -323,13 +336,17 @@ class _PaymentSummary extends StatelessWidget {
   const _PaymentSummary({
     required this.viewModel,
     required this.isConfirmed,
+    required this.selectedPaymentMethod,
     required this.onConfirmedChanged,
+    required this.onPaymentMethodChanged,
     required this.onPay,
   });
 
   final PaymentViewModel viewModel;
   final bool isConfirmed;
+  final String selectedPaymentMethod;
   final ValueChanged<bool> onConfirmedChanged;
+  final ValueChanged<String> onPaymentMethodChanged;
   final VoidCallback onPay;
 
   @override
@@ -350,7 +367,10 @@ class _PaymentSummary extends StatelessWidget {
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 14),
-            const _PaymentMethodTile(),
+            _PaymentMethodSelector(
+              selectedPaymentMethod: selectedPaymentMethod,
+              onChanged: onPaymentMethodChanged,
+            ),
             const SizedBox(height: 22),
             Text(
               '결제 금액',
@@ -392,36 +412,90 @@ class _PaymentSummary extends StatelessWidget {
   }
 }
 
-class _PaymentMethodTile extends StatelessWidget {
-  const _PaymentMethodTile();
+class _PaymentMethodSelector extends StatelessWidget {
+  const _PaymentMethodSelector({
+    required this.selectedPaymentMethod,
+    required this.onChanged,
+  });
+
+  final String selectedPaymentMethod;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF5F0),
-        border: Border.all(color: const Color(0xFFD4E1D8)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Icon(
-              Icons.radio_button_checked,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                '카드 간편결제',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-            const _SmallBadge(label: '선택됨'),
+    const methods = ['카드 간편결제', '무통장 입금', '카카오페이', '네이버페이'];
+    final isCard = selectedPaymentMethod == '카드 간편결제';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<String>(
+          initialValue: selectedPaymentMethod,
+          items: [
+            for (final method in methods)
+              DropdownMenuItem(value: method, child: Text(method)),
           ],
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            onChanged(value);
+          },
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: isCard ? const Color(0xFFEFF5F0) : const Color(0xFFF7F4EE),
+            border: Border.all(
+              color: isCard ? const Color(0xFFD4E1D8) : const Color(0xFFE5D8C5),
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Icon(
+                  isCard ? Icons.credit_card_outlined : Icons.schedule_outlined,
+                  color: isCard
+                      ? Theme.of(context).colorScheme.primary
+                      : const Color(0xFF8A6229),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        selectedPaymentMethod,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isCard
+                            ? 'Harvest Slot 시연용 결제 수단입니다.'
+                            : '해당 결제 수단은 준비 중입니다.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF5F6C62),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _SmallBadge(label: isCard ? '시연 가능' : '준비 중'),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -535,7 +609,9 @@ class _SummaryRow extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF657166)),
           ),
         ),
-        Text(value, style: textStyle),
+        Flexible(
+          child: Text(value, textAlign: TextAlign.right, style: textStyle),
+        ),
       ],
     );
   }

@@ -202,6 +202,9 @@ class _ProgressPanel extends StatelessWidget {
     final isDelivered = order.orderStatusLabel == '배송 완료' || isReturnRequested;
     final isShipped = order.orderStatusLabel == '배송 중' || isDelivered;
     final isFarmChecking = order.orderStatusLabel == '농가 확인 중';
+    final shipmentDescription = isShipped
+        ? '${order.carrierName} ${order.trackingNumber}로 배송이 진행 중입니다.'
+        : '발송이 시작되면 택배사와 송장번호를 안내합니다.';
     final steps = [
       const _ProgressStepData(
         label: '결제 완료',
@@ -220,8 +223,8 @@ class _ProgressPanel extends StatelessWidget {
         icon: isFarmChecking ? Icons.hourglass_top : Icons.check,
       ),
       _ProgressStepData(
-        label: '발송 준비',
-        description: '농가 확인이 끝난 상품을 선별하고 발송을 준비하고 있습니다.',
+        label: '농가 승인 완료',
+        description: '농가가 주문 수량을 확인하고 발송 준비를 시작했습니다.',
         time: isFarmChecking ? '예정' : '10.18 09:40',
         completed: !isFarmChecking,
         current: false,
@@ -229,7 +232,7 @@ class _ProgressPanel extends StatelessWidget {
       ),
       _ProgressStepData(
         label: '배송 중',
-        description: '발송이 시작된 사과가 배송지로 이동 중입니다.',
+        description: shipmentDescription,
         time: isShipped ? '10.18 13:20' : '예정',
         completed: isShipped,
         current: order.orderStatusLabel == '배송 중',
@@ -368,11 +371,14 @@ class _OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canReturn = order.orderStatusLabel == '배송 완료';
-    final hasShipmentInfo = order.orderStatusLabel == '배송 중' ||
+    final hasShipmentInfo =
+        order.orderStatusLabel == '배송 중' ||
         order.orderStatusLabel == '배송 완료' ||
         order.orderStatusLabel == '반품 요청 접수';
     final carrierDisplay = hasShipmentInfo ? order.carrierName : '배송 준비 중';
-    final trackingDisplay = hasShipmentInfo ? order.trackingNumber : '송장번호 준비 중';
+    final trackingDisplay = hasShipmentInfo
+        ? order.trackingNumber
+        : '송장번호 준비 중';
 
     return DecoratedBox(
       decoration: BoxDecoration(

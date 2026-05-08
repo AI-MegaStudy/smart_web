@@ -9,7 +9,8 @@ class ReservationConfirmViewModel extends ChangeNotifier {
   ReservationConfirmViewModel({
     LocalBasketRepository? localBasketRepository,
     ProductRepository? productRepository,
-  }) : _localBasketRepository = localBasketRepository ?? LocalBasketRepository(),
+  }) : _localBasketRepository =
+           localBasketRepository ?? LocalBasketRepository(),
        _productRepository = productRepository ?? ProductRepository();
 
   final LocalBasketRepository _localBasketRepository;
@@ -45,7 +46,9 @@ class ReservationConfirmViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Map<int, String>> _validateItems(List<LocalBasketItemModel> items) async {
+  Future<Map<int, String>> _validateItems(
+    List<LocalBasketItemModel> items,
+  ) async {
     final issues = <int, String>{};
 
     for (final item in items) {
@@ -64,7 +67,7 @@ class ReservationConfirmViewModel extends ChangeNotifier {
       final availablePackageCount = slot.availableKg ~/ item.packageUnitKg;
       if (availablePackageCount < item.packageCount) {
         issues[item.slotId] =
-            '현재 남은 수량으로는 ${availablePackageCount}박스까지 예약할 수 있습니다.';
+            '현재 남은 수량으로는 $availablePackageCount박스까지 예약할 수 있습니다.';
       }
     }
 

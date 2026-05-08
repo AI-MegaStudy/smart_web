@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kpostal_plus/kpostal_plus.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
@@ -207,13 +208,13 @@ class _ShippingForm extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '기본 배송지를 사용할 수 있고, 이번 주문에 필요한 정보는 직접 수정할 수 있습니다.',
+              '저장된 배송지를 선택하거나 이번 주문에 필요한 정보만 직접 수정할 수 있습니다.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF5F6C62)),
             ),
             const SizedBox(height: 16),
-            _DefaultAddressSwitch(viewModel: viewModel),
+            _AddressChoiceSection(viewModel: viewModel),
             const SizedBox(height: 18),
             _TextInput(
               label: '받는 분',
@@ -242,10 +243,7 @@ class _ShippingForm extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: OutlinedButton.icon(
-                    onPressed: () => showAppAlertDialog(
-                      context,
-                      message: '카카오 주소 API 연동은 추후 배송지 관리 기능과 함께 연결할 예정입니다.',
-                    ),
+                    onPressed: () => _searchAddress(context),
                     icon: const Icon(Icons.search),
                     label: const Text('주소 검색'),
                   ),
@@ -295,59 +293,32 @@ class _ShippingForm extends StatelessWidget {
       ),
     );
   }
-}
 
-class _DefaultAddressSwitch extends StatelessWidget {
-  const _DefaultAddressSwitch({required this.viewModel});
-
-  final CheckoutViewModel viewModel;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8F3),
-        border: Border.all(color: const Color(0xFFDCE3DD)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Checkbox(
-              value: viewModel.useDefaultAddress,
-              onChanged: (value) {
-                viewModel.updateUseDefaultAddress(value ?? false);
-              },
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '기본 배송지 사용',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF163B2B),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${viewModel.defaultReceiverName} · ${viewModel.defaultReceiverPhone} · ${viewModel.defaultShippingAddress}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF5F6C62),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  Future<void> _searchAddress(BuildContext context) async {
+    final result = await Navigator.push<Kpostal>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KpostalPlusView(
+          title: '주소 찾기',
+          appBarColor: Theme.of(context).colorScheme.primary,
+          titleColor: Colors.white,
+          loadingColor: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
+
+    if (result == null) {
+      return;
+    }
+
+    final selectedAddress = result.userSelectedAddress.isNotEmpty
+        ? result.userSelectedAddress
+        : result.address;
+    final formattedAddress = result.postCode.isEmpty
+        ? selectedAddress
+        : '(${result.postCode}) $selectedAddress';
+
+    viewModel.updateShippingAddress(formattedAddress);
   }
 }
 
@@ -437,6 +408,10 @@ class _DeliverySummary extends StatelessWidget {
             Text('${viewModel.receiverName} · ${viewModel.receiverPhone}'),
             const SizedBox(height: 4),
             Text(viewModel.shippingAddress),
+            if (viewModel.selectedAddress.label.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text('배송지: ${viewModel.selectedAddress.label}'),
+            ],
             const SizedBox(height: 4),
             Text(viewModel.deliveryMemo),
           ],
@@ -522,12 +497,199 @@ class _TextInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      key: ValueKey('$label-$initialValue'),
       initialValue: initialValue,
       maxLines: maxLines,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+}
+
+class _AddressChoiceSection extends StatelessWidget {
+  const _AddressChoiceSection({required this.viewModel});
+
+  final CheckoutViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '배송지 선택',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+              ),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.addressAdd),
+              child: const Text('배송지 추가'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 640;
+            final cards = [
+              for (final address in viewModel.addressOptions)
+                _AddressChoiceCard(
+                  address: address,
+                  selected: viewModel.selectedAddressId == address.id,
+                  onTap: () => viewModel.selectAddress(address.id),
+                ),
+            ];
+
+            if (!isWide) {
+              return Column(
+                children: [
+                  for (var index = 0; index < cards.length; index += 1) ...[
+                    cards[index],
+                    if (index != cards.length - 1) const SizedBox(height: 10),
+                  ],
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                for (var index = 0; index < cards.length; index += 1) ...[
+                  Expanded(child: cards[index]),
+                  if (index != cards.length - 1) const SizedBox(width: 10),
+                ],
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _AddressChoiceCard extends StatelessWidget {
+  const _AddressChoiceCard({
+    required this.address,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final CheckoutAddressOption address;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFE7F3EB) : const Color(0xFFF7F8F3),
+            border: Border.all(
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : const Color(0xFFDCE3DD),
+              width: selected ? 1.5 : 1,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      selected
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        address.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    if (address.isDefault) const _SmallAddressBadge('기본 배송지'),
+                    if (address.isRecent) const _SmallAddressBadge('최근 사용'),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${address.receiverName} · ${address.receiverPhone}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  address.address,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF5F6C62),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SmallAddressBadge extends StatelessWidget {
+  const _SmallAddressBadge(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFDCE3DD)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: const Color(0xFF4B584D),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
     );
   }

@@ -243,6 +243,14 @@ class _ReturnForm extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            '상세 사유는 10자 이상 입력해주세요.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF657166),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 18),
           const _UploadBox(),
           const SizedBox(height: 22),
@@ -263,9 +271,6 @@ class _ReturnForm extends StatelessWidget {
               _AmountOption(
                 label: '전체 ${formatPrice(order?.totalAmount ?? 0)}',
                 selected: true,
-              ),
-              _AmountOption(
-                label: '부분 ${formatPrice(viewModel.requestAmount)}',
               ),
               const _AmountOption(label: '확인 후 결정'),
             ],
@@ -376,22 +381,35 @@ class _ReasonChoiceGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 620;
+        final cards = [
+          for (final label in viewModel.reasonLabels)
+            _ReasonChoiceCard(
+              title: label,
+              description: descriptions[label] ?? '',
+              selected: viewModel.selectedReasonLabel == label,
+              onTap: () => viewModel.selectReason(label),
+            ),
+        ];
+
+        if (isNarrow) {
+          return Column(
+            children: [
+              for (var index = 0; index < cards.length; index += 1) ...[
+                cards[index],
+                if (index != cards.length - 1) const SizedBox(height: 10),
+              ],
+            ],
+          );
+        }
+
         return GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: isNarrow ? 1 : 2,
+          crossAxisCount: 2,
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: isNarrow ? 4.8 : 3.2,
-          children: [
-            for (final label in viewModel.reasonLabels)
-              _ReasonChoiceCard(
-                title: label,
-                description: descriptions[label] ?? '',
-                selected: viewModel.selectedReasonLabel == label,
-                onTap: () => viewModel.selectReason(label),
-              ),
-          ],
+          childAspectRatio: 3.2,
+          children: cards,
         );
       },
     );
@@ -602,10 +620,10 @@ class _ReturnSummary extends StatelessWidget {
               Expanded(
                 child: FilledButton.icon(
                   onPressed: () async {
-                    if (viewModel.reasonDetail.trim().isEmpty) {
+                    if (viewModel.reasonDetail.trim().length < 10) {
                       showAppAlertDialog(
                         context,
-                        message: '반품 사유를 자세히 입력해주세요.',
+                        message: '반품 상세 사유를 10자 이상 입력해주세요.',
                       );
                       return;
                     }

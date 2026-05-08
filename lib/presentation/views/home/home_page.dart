@@ -19,6 +19,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final HomeViewModel _viewModel;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _topKey = GlobalKey();
+  final GlobalKey _productsKey = GlobalKey();
+  final GlobalKey _varietyKey = GlobalKey();
+  final GlobalKey _storageKey = GlobalKey();
+  final GlobalKey _processKey = GlobalKey();
+  final GlobalKey _faqKey = GlobalKey();
 
   @override
   void initState() {
@@ -28,8 +35,23 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _scrollTo(GlobalKey key) {
+    final context = key.currentContext;
+    if (context == null) {
+      return;
+    }
+
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      alignment: 0.06,
+    );
   }
 
   @override
@@ -53,9 +75,11 @@ class _HomePageState extends State<HomePage> {
           animation: _viewModel,
           builder: (context, _) {
             return CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 SliverToBoxAdapter(
                   child: _ConstrainedContent(
+                    key: _topKey,
                     child: _RevealOnLoad(
                       delay: Duration.zero,
                       child: _HeroSection(
@@ -69,6 +93,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SliverToBoxAdapter(
                   child: _ConstrainedContent(
+                    key: _productsKey,
                     child: _RevealOnLoad(
                       delay: const Duration(milliseconds: 140),
                       child: _SectionHeader(
@@ -155,13 +180,19 @@ class _HomePageState extends State<HomePage> {
                 SliverToBoxAdapter(
                   child: _RevealOnLoad(
                     delay: const Duration(milliseconds: 440),
-                    child: _ConstrainedContent(child: const _VarietySection()),
+                    child: _ConstrainedContent(
+                      key: _varietyKey,
+                      child: const _VarietySection(),
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: _RevealOnLoad(
                     delay: const Duration(milliseconds: 450),
-                    child: _ConstrainedContent(child: const _StorageSection()),
+                    child: _ConstrainedContent(
+                      key: _storageKey,
+                      child: const _StorageSection(),
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -173,13 +204,19 @@ class _HomePageState extends State<HomePage> {
                 SliverToBoxAdapter(
                   child: _RevealOnLoad(
                     delay: const Duration(milliseconds: 460),
-                    child: _ConstrainedContent(child: const _ProcessSection()),
+                    child: _ConstrainedContent(
+                      key: _processKey,
+                      child: const _ProcessSection(),
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: _RevealOnLoad(
                     delay: const Duration(milliseconds: 480),
-                    child: _ConstrainedContent(child: const _FaqSection()),
+                    child: _ConstrainedContent(
+                      key: _faqKey,
+                      child: const _FaqSection(),
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -195,12 +232,21 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
+      floatingActionButton: _HomeQuickNav(
+        onTopTap: () => _scrollTo(_topKey),
+        onProductsTap: () => _scrollTo(_productsKey),
+        onVarietyTap: () => _scrollTo(_varietyKey),
+        onStorageTap: () => _scrollTo(_storageKey),
+        onProcessTap: () => _scrollTo(_processKey),
+        onFaqTap: () => _scrollTo(_faqKey),
+      ),
+      floatingActionButtonLocation: const _ResponsiveQuickNavLocation(),
     );
   }
 }
 
 class _ConstrainedContent extends StatelessWidget {
-  const _ConstrainedContent({required this.child});
+  const _ConstrainedContent({super.key, required this.child});
 
   final Widget child;
 
@@ -210,6 +256,200 @@ class _ConstrainedContent extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1180),
         child: child,
+      ),
+    );
+  }
+}
+
+class _ResponsiveQuickNavLocation extends FloatingActionButtonLocation {
+  const _ResponsiveQuickNavLocation();
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
+    final scaffoldSize = scaffoldGeometry.scaffoldSize;
+    final navSize = scaffoldGeometry.floatingActionButtonSize;
+    final isMobile = scaffoldSize.width < 720;
+
+    if (isMobile) {
+      final bottomInset = scaffoldGeometry.minInsets.bottom;
+      return Offset(
+        (scaffoldSize.width - navSize.width) / 2,
+        scaffoldSize.height - navSize.height - bottomInset - 16,
+      );
+    }
+
+    final top = (scaffoldSize.height * 0.42)
+        .clamp(96.0, scaffoldSize.height - navSize.height - 24)
+        .toDouble();
+
+    return Offset(scaffoldSize.width - navSize.width - 18, top);
+  }
+}
+
+class _HomeQuickNav extends StatelessWidget {
+  const _HomeQuickNav({
+    required this.onTopTap,
+    required this.onProductsTap,
+    required this.onVarietyTap,
+    required this.onStorageTap,
+    required this.onProcessTap,
+    required this.onFaqTap,
+  });
+
+  final VoidCallback onTopTap;
+  final VoidCallback onProductsTap;
+  final VoidCallback onVarietyTap;
+  final VoidCallback onStorageTap;
+  final VoidCallback onProcessTap;
+  final VoidCallback onFaqTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = MediaQuery.sizeOf(context).width < 720;
+        final items = [
+          _QuickNavItem(icon: Icons.arrow_upward, label: '위로', onTap: onTopTap),
+          _QuickNavItem(
+            icon: Icons.inventory_2_outlined,
+            label: '상품',
+            onTap: onProductsTap,
+          ),
+          _QuickNavItem(icon: Icons.apple, label: '품종', onTap: onVarietyTap),
+          _QuickNavItem(
+            icon: Icons.ac_unit_outlined,
+            label: '보관',
+            onTap: onStorageTap,
+          ),
+          _QuickNavItem(
+            icon: Icons.route_outlined,
+            label: '흐름',
+            onTap: onProcessTap,
+          ),
+          _QuickNavItem(
+            icon: Icons.help_outline,
+            label: 'FAQ',
+            onTap: onFaqTap,
+          ),
+        ];
+
+        if (isMobile) {
+          return _MobileQuickNav(items: items);
+        }
+
+        return _DesktopQuickNav(items: items);
+      },
+    );
+  }
+}
+
+class _QuickNavItem {
+  const _QuickNavItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
+class _DesktopQuickNav extends StatelessWidget {
+  const _DesktopQuickNav({required this.items});
+
+  final List<_QuickNavItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      elevation: 8,
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < items.length; index += 1) ...[
+              _DesktopQuickNavButton(item: items[index]),
+              if (index != items.length - 1) const SizedBox(height: 4),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopQuickNavButton extends StatelessWidget {
+  const _DesktopQuickNavButton({required this.item});
+
+  final _QuickNavItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: item.label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: item.onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                item.icon,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                item.label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFF163B2B),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileQuickNav extends StatelessWidget {
+  const _MobileQuickNav({required this.items});
+
+  final List<_QuickNavItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      elevation: 8,
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final item in items)
+              IconButton(
+                onPressed: item.onTap,
+                icon: Icon(item.icon, size: 18),
+                tooltip: item.label,
+                color: Theme.of(context).colorScheme.primary,
+                constraints: const BoxConstraints.tightFor(
+                  width: 38,
+                  height: 38,
+                ),
+                padding: EdgeInsets.zero,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -935,22 +1175,13 @@ class _ParallaxTrustSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 24),
                         Wrap(
-                          spacing: 10,
+                          spacing: 18,
                           runSpacing: 10,
                           alignment: WrapAlignment.center,
                           children: const [
-                            _TrustBadge(
-                              icon: Icons.event_available_outlined,
-                              label: '농가 확정 수확',
-                            ),
-                            _TrustBadge(
-                              icon: Icons.inventory_outlined,
-                              label: '잔여 수량 확인',
-                            ),
-                            _TrustBadge(
-                              icon: Icons.local_shipping_outlined,
-                              label: '수확 후 순차 배송',
-                            ),
+                            _TrustCaption(label: '농가 확정 수확'),
+                            _TrustCaption(label: '잔여 수량 확인'),
+                            _TrustCaption(label: '수확 후 순차 배송'),
                           ],
                         ),
                       ],
@@ -1021,36 +1252,33 @@ class _ParallaxImage extends StatelessWidget {
   }
 }
 
-class _TrustBadge extends StatelessWidget {
-  const _TrustBadge({required this.icon, required this.label});
+class _TrustCaption extends StatelessWidget {
+  const _TrustCaption({required this.label});
 
-  final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xCCFFFFFF),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: const Color(0xFF163B2B)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: const Color(0xFF163B2B),
-                fontWeight: FontWeight.w900,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.check_circle_outline, size: 17, color: Colors.white),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            shadows: const [
+              Shadow(
+                color: Color(0x99000000),
+                blurRadius: 6,
+                offset: Offset(0, 1),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -1235,59 +1463,78 @@ class _VarietySection extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 44),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '품종 소개',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w900,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFDCE3DD)),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0F000000),
+              blurRadius: 16,
+              offset: Offset(0, 6),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '예약 전 품종별 특징을 확인해보세요',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '같은 사과라도 품종마다 식감, 향, 보관성, 산미가 다릅니다. 원하는 맛에 맞춰 수확 슬롯을 선택해보세요.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: const Color(0xFF5F6C62),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 22),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columnCount = constraints.maxWidth >= 980
-                  ? 4
-                  : constraints.maxWidth >= 640
-                  ? 2
-                  : 1;
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '품종 소개',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '예약 전 품종별 특징을 확인해보세요',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF163B2B),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Text(
+                  '같은 사과라도 품종마다 식감, 향, 보관성, 산미가 다릅니다. 원하는 맛에 맞춰 수확 슬롯을 선택해보세요.',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: const Color(0xFF5F6C62),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 22),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final columnCount = width >= 980
+                      ? 4
+                      : width >= 640
+                      ? 2
+                      : 1;
+                  final itemWidth =
+                      (width - (14 * (columnCount - 1))) / columnCount;
 
-              return GridView.count(
-                crossAxisCount: columnCount,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: columnCount == 1
-                    ? 2.6
-                    : columnCount == 2
-                    ? 1.35
-                    : 1.15,
-                children: [
-                  for (final variety in varieties)
-                    _VarietyCard(variety: variety),
-                ],
-              );
-            },
+                  return Wrap(
+                    spacing: 14,
+                    runSpacing: 14,
+                    children: [
+                      for (final variety in varieties)
+                        SizedBox(
+                          width: itemWidth,
+                          child: _VarietyCard(variety: variety),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1317,7 +1564,7 @@ class _VarietyCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0xFFDCE3DD)),
+        border: Border.all(color: const Color(0xFFE3E8E1)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
@@ -1398,7 +1645,15 @@ class _StorageSection extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: const Color(0xFFEEF4EE),
-          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFD7E3D8)),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0D000000),
+              blurRadius: 14,
+              offset: Offset(0, 5),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -1408,6 +1663,19 @@ class _StorageSection extends StatelessWidget {
               final header = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Icon(
+                      Icons.inventory_2_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Text(
                     '보관 안내',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -1489,7 +1757,7 @@ class _StorageTipTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDCE3DD)),
+        border: Border.all(color: const Color(0xFFE0E8DF)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -1557,60 +1825,118 @@ class _EnjoySection extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 44),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '즐기는 방법',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '수확 사과를 더 맛있게 즐겨보세요',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '예약한 사과를 받은 뒤 바로 먹어도 좋고, 간단한 식사나 디저트로 활용해도 좋습니다.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: const Color(0xFF5F6C62),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 22),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 920;
-              if (!isWide) {
-                return Column(
-                  children: [
-                    for (var index = 0; index < items.length; index += 1) ...[
-                      _EnjoyTile(item: items[index], index: index + 1),
-                      if (index != items.length - 1) const SizedBox(height: 12),
-                    ],
-                  ],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: _HomeSectionPanel(
+        icon: Icons.restaurant_outlined,
+        label: '즐기는 방법',
+        title: '수확 사과를 더 맛있게 즐겨보세요',
+        description: '예약한 사과를 받은 뒤 바로 먹어도 좋고, 간단한 식사나 디저트로 활용해도 좋습니다.',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 920;
+            if (!isWide) {
+              return Column(
                 children: [
                   for (var index = 0; index < items.length; index += 1) ...[
-                    Expanded(
-                      child: _EnjoyTile(item: items[index], index: index + 1),
-                    ),
-                    if (index != items.length - 1) const SizedBox(width: 14),
+                    _EnjoyTile(item: items[index], index: index + 1),
+                    if (index != items.length - 1) const SizedBox(height: 12),
                   ],
                 ],
               );
-            },
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < items.length; index += 1) ...[
+                  Expanded(
+                    child: _EnjoyTile(item: items[index], index: index + 1),
+                  ),
+                  if (index != items.length - 1) const SizedBox(width: 14),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeSectionPanel extends StatelessWidget {
+  const _HomeSectionPanel({
+    required this.icon,
+    required this.label,
+    required this.title,
+    required this.description,
+    required this.child,
+  });
+
+  final IconData icon;
+  final String label;
+  final String title;
+  final String description;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFDCE3DD)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7F3EB),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF163B2B),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Text(
+                description,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: const Color(0xFF5F6C62),
+                  height: 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            child,
+          ],
+        ),
       ),
     );
   }
@@ -1734,82 +2060,37 @@ class _ProcessSection extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 6, 24, 48),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '예약 흐름',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const _RevealOnLoad(
-            delay: Duration(milliseconds: 80),
-            child: _ProcessTitleText(),
-          ),
-          const SizedBox(height: 12),
-          const _RevealOnLoad(
-            delay: Duration(milliseconds: 160),
-            child: _ProcessDescriptionText(),
-          ),
-          const SizedBox(height: 22),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columnCount = constraints.maxWidth >= 980
-                  ? 3
-                  : constraints.maxWidth >= 640
-                  ? 2
-                  : 1;
+      child: _HomeSectionPanel(
+        icon: Icons.route_outlined,
+        label: '예약 흐름',
+        title: '수확부터 배송까지 한눈에 확인하세요',
+        description:
+            'Harvest Slot은 농가가 확정한 수확 예정 범위를 기준으로 예약하고, 주문 상세에서 발송 준비와 배송 상태를 단계별로 안내합니다.',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final columnCount = constraints.maxWidth >= 980
+                ? 3
+                : constraints.maxWidth >= 640
+                ? 2
+                : 1;
 
-              return GridView.count(
-                crossAxisCount: columnCount,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: columnCount == 1 ? 3.4 : 2.25,
-                children: [
-                  for (var index = 0; index < steps.length; index += 1)
-                    _RevealOnLoad(
-                      delay: Duration(milliseconds: 90 * index),
-                      child: _ProcessCard(index: index + 1, step: steps[index]),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProcessTitleText extends StatelessWidget {
-  const _ProcessTitleText();
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      '수확부터 배송까지 한눈에 확인하세요',
-      style: Theme.of(
-        context,
-      ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-    );
-  }
-}
-
-class _ProcessDescriptionText extends StatelessWidget {
-  const _ProcessDescriptionText();
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Harvest Slot은 농가가 확정한 수확 예정 범위를 기준으로 예약하고, 주문 상세에서 선별과 배송 상태를 단계별로 안내합니다.',
-      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        color: const Color(0xFF5F6C62),
-        height: 1.5,
+            return GridView.count(
+              crossAxisCount: columnCount,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: columnCount == 1 ? 3.4 : 2.25,
+              children: [
+                for (var index = 0; index < steps.length; index += 1)
+                  _RevealOnLoad(
+                    delay: Duration(milliseconds: 90 * index),
+                    child: _ProcessCard(index: index + 1, step: steps[index]),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -1968,50 +2249,36 @@ class _FaqSection extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 44),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '자주 묻는 질문',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '예약 전에 궁금한 점을 확인하세요',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 18),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 900;
-              if (!isWide) {
-                return Column(
-                  children: [
-                    for (var index = 0; index < faqs.length; index += 1) ...[
-                      _FaqTile(item: faqs[index]),
-                      if (index != faqs.length - 1) const SizedBox(height: 10),
-                    ],
+      child: _HomeSectionPanel(
+        icon: Icons.help_outline,
+        label: '자주 묻는 질문',
+        title: '예약 전에 궁금한 점을 확인하세요',
+        description: '수확 일정, 예약 수량, 배송과 반품처럼 고객이 자주 확인하는 내용을 모았습니다.',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 900;
+            if (!isWide) {
+              return Column(
+                children: [
+                  for (var index = 0; index < faqs.length; index += 1) ...[
+                    _FaqTile(item: faqs[index]),
+                    if (index != faqs.length - 1) const SizedBox(height: 10),
                   ],
-                );
-              }
-
-              return GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-                childAspectRatio: 3.7,
-                children: [for (final faq in faqs) _FaqTile(item: faq)],
+                ],
               );
-            },
-          ),
-        ],
+            }
+
+            return GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 3.7,
+              children: [for (final faq in faqs) _FaqTile(item: faq)],
+            );
+          },
+        ),
       ),
     );
   }
@@ -2081,8 +2348,10 @@ class _CleanSupportFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.sizeOf(context).width < 720 ? 112.0 : 40.0;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, 0, 24, bottomPadding),
       child: Column(
         children: [
           LayoutBuilder(

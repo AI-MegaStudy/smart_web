@@ -53,7 +53,7 @@ class OrderRepository {
       orderNumber: 'ORD-20261012-${orderId.toString().padLeft(3, '0')}',
       orderStatusLabel: _statusLabelFor(
         orderId,
-        fallback: orderId == 8 ? '농가 확인 중' : '배송 중',
+        fallback: _fallbackStatusForDetail(orderId),
       ),
       receiverName: '홍길동',
       shippingAddress: '서울시 강남구 테헤란로 123',
@@ -73,5 +73,14 @@ class OrderRepository {
     }
 
     return fallback;
+  }
+
+  static String _fallbackStatusForDetail(int orderId) {
+    return switch (orderId) {
+      8 => '농가 확인 중',
+      14 => '배송 중',
+      2 => '배송 완료',
+      _ => '배송 중',
+    };
   }
 }

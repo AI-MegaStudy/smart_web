@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kpostal_plus/kpostal_plus.dart';
 
 import '../../../app/router.dart';
 import '../../widgets/brand_app_bar_title.dart';
@@ -71,15 +72,17 @@ class _AddressItem extends StatelessWidget {
               runSpacing: 6,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: const [
-                Text(
-                  '홍길동',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                ),
+                _SmallBadge(label: '내집'),
                 _SmallBadge(label: '기본 배송지'),
                 _SmallBadge(label: '최근 사용'),
               ],
             ),
             const SizedBox(height: 10),
+            const Text(
+              '홍길동',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
             const Text(
               '서울시 강남구 테헤란로 123',
               style: TextStyle(fontWeight: FontWeight.w700),
@@ -121,6 +124,7 @@ class _AddressAddPageState extends State<AddressAddPage> {
   String _requestMemo = '배송 요청사항을 선택해주세요';
 
   late final TextEditingController _nameController;
+  late final TextEditingController _addressLabelController;
   late final TextEditingController _phoneController;
   late final TextEditingController _zipCodeController;
   late final TextEditingController _addressController;
@@ -134,6 +138,9 @@ class _AddressAddPageState extends State<AddressAddPage> {
     super.initState();
     _setDefault = widget.isEdit;
     _nameController = TextEditingController(text: widget.isEdit ? '홍길동' : '');
+    _addressLabelController = TextEditingController(
+      text: widget.isEdit ? '내집' : '',
+    );
     _phoneController = TextEditingController(
       text: widget.isEdit ? '010-1111-2222' : '',
     );
@@ -152,6 +159,7 @@ class _AddressAddPageState extends State<AddressAddPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _addressLabelController.dispose();
     _phoneController.dispose();
     _zipCodeController.dispose();
     _addressController.dispose();
@@ -191,6 +199,12 @@ class _AddressAddPageState extends State<AddressAddPage> {
                           hintText: '받는 분의 이름을 입력해주세요',
                         ),
                         const SizedBox(height: 18),
+                        const _FieldLabel('배송지 별명 (선택)'),
+                        _TextInput(
+                          controller: _addressLabelController,
+                          hintText: '예: 내집, 부모님댁, 회사',
+                        ),
+                        const SizedBox(height: 18),
                         const _FieldLabel('휴대폰번호'),
                         _TextInput(
                           controller: _phoneController,
@@ -208,10 +222,7 @@ class _AddressAddPageState extends State<AddressAddPage> {
                             ),
                             const SizedBox(width: 6),
                             OutlinedButton(
-                              onPressed: () => _showNotice(
-                                context,
-                                '주소 찾기는 카카오 주소 API 연결 단계에서 적용할 예정입니다.',
-                              ),
+                              onPressed: _searchAddress,
                               child: const Text('주소 찾기'),
                             ),
                           ],
@@ -292,6 +303,33 @@ class _AddressAddPageState extends State<AddressAddPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _searchAddress() async {
+    final result = await Navigator.push<Kpostal>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KpostalPlusView(
+          title: '주소 찾기',
+          appBarColor: Theme.of(context).colorScheme.primary,
+          titleColor: Colors.white,
+          loadingColor: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    final selectedAddress = result.userSelectedAddress.isNotEmpty
+        ? result.userSelectedAddress
+        : result.address;
+
+    setState(() {
+      _zipCodeController.text = result.postCode;
+      _addressController.text = selectedAddress;
+    });
   }
 
   Future<void> _showNotice(BuildContext context, String message) {

@@ -66,8 +66,7 @@ class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
 
                 await showAppAlertDialog(
                   context,
-                  message:
-                      '현재 예약 가능한 수량이 변경되었습니다. 예약 내용을 확인한 뒤 다시 진행해주세요.',
+                  message: '현재 예약 가능한 수량이 변경되었습니다. 예약 내용을 확인한 뒤 다시 진행해주세요.',
                 );
               });
             }
@@ -216,10 +215,7 @@ class _PageIntro extends StatelessWidget {
 }
 
 class _ReservationItemList extends StatelessWidget {
-  const _ReservationItemList({
-    required this.items,
-    required this.issueForItem,
-  });
+  const _ReservationItemList({required this.items, required this.issueForItem});
 
   final List<LocalBasketItemModel> items;
   final String? Function(LocalBasketItemModel item) issueForItem;
@@ -239,10 +235,7 @@ class _ReservationItemList extends StatelessWidget {
 }
 
 class _ReservationItemCard extends StatelessWidget {
-  const _ReservationItemCard({
-    required this.item,
-    required this.issueMessage,
-  });
+  const _ReservationItemCard({required this.item, required this.issueMessage});
 
   final LocalBasketItemModel item;
   final String? issueMessage;
@@ -328,8 +321,8 @@ class _ReservationSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFAF1),
-        border: Border.all(color: const Color(0xFFE6D7B8)),
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFDCE3DD)),
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
@@ -344,30 +337,8 @@ class _ReservationSummary extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5E5B8),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '예약 요약',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: const Color(0xFF6A4B16),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             Text(
-              '예약 내용 요약',
+              '예약 상품 확인',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF163B2B),
@@ -386,18 +357,30 @@ class _ReservationSummary extends StatelessWidget {
               value: formatPrice(viewModel.totalAmount),
             ),
             const SizedBox(height: 18),
-            const NoticeBox(
+            const _ReservationGuideBox(
+              title: '수확 일정 안내',
               message: '농가가 정한 수확 예정 기간입니다. 기상과 생육 상황에 따라 일정이 조정될 수 있습니다.',
+              icon: Icons.event_available_outlined,
+              backgroundColor: Color(0xFFFFF6E0),
+              borderColor: Color(0xFFEED8A8),
+              iconColor: Color(0xFF9A6A16),
+              textColor: Color(0xFF5D4312),
             ),
             const SizedBox(height: 12),
-            const NoticeBox(
-              message: '다음 단계에서 배송 정보를 입력하고 결제 전 금액을 다시 확인합니다.',
+            const _ReservationGuideBox(
+              title: '다음 단계 안내',
+              message: '배송 정보를 입력하고 결제 전 금액을 다시 확인합니다.',
               icon: Icons.verified_outlined,
+              backgroundColor: Color(0xFFEFF7F1),
+              borderColor: Color(0xFFCFE2D5),
+              iconColor: Color(0xFF2F6B4E),
+              textColor: Color(0xFF214634),
             ),
             if (viewModel.hasBlockingIssue) ...[
               const SizedBox(height: 12),
               const NoticeBox(
-                message: '예약 가능한 수량이 바뀐 항목이 있어 주문서 작성으로 바로 넘어갈 수 없습니다. 예약함에서 수량을 다시 확인해주세요.',
+                message:
+                    '예약 가능한 수량이 바뀐 항목이 있어 주문서 작성으로 바로 넘어갈 수 없습니다. 예약함에서 수량을 다시 확인해주세요.',
                 icon: Icons.error_outline,
                 backgroundColor: Color(0xFFFFF1ED),
                 borderColor: Color(0xFFF3C5B8),
@@ -420,14 +403,75 @@ class _ReservationSummary extends StatelessWidget {
             if (viewModel.hasBlockingIssue) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.basket,
-                ),
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.basket),
                 icon: const Icon(Icons.shopping_basket_outlined),
                 label: const Text('예약함으로 돌아가기'),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReservationGuideBox extends StatelessWidget {
+  const _ReservationGuideBox({
+    required this.title,
+    required this.message,
+    required this.icon,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.iconColor,
+    required this.textColor,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color iconColor;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border.all(color: borderColor),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: textColor,
+                      height: 1.45,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
