@@ -5,6 +5,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/order_model.dart';
 import '../../view_models/my_orders_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/empty_state_panel.dart';
 import '../../widgets/status_badge.dart';
 
 class MyOrdersPage extends StatefulWidget {
@@ -55,14 +56,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                   child: _ConstrainedContent(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
-                      child: Column(
-                        children: [
-                          for (final order in _viewModel.orders) ...[
-                            _OrderListItem(order: order),
-                            const SizedBox(height: 12),
-                          ],
-                        ],
-                      ),
+                      child: _OrderList(viewModel: _viewModel),
                     ),
                   ),
                 ),
@@ -71,6 +65,44 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
           },
         ),
       ),
+    );
+  }
+}
+
+class _OrderList extends StatelessWidget {
+  const _OrderList({required this.viewModel});
+
+  final MyOrdersViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    if (viewModel.errorMessage != null) {
+      return EmptyStatePanel(
+        icon: Icons.error_outline,
+        title: '주문 내역을 불러오지 못했습니다',
+        message: viewModel.errorMessage!,
+        actionLabel: '다시 시도',
+        onAction: viewModel.load,
+      );
+    }
+
+    if (viewModel.orders.isEmpty) {
+      return EmptyStatePanel(
+        icon: Icons.receipt_long_outlined,
+        title: '아직 주문 내역이 없습니다',
+        message: '예약 가능한 수확 상품을 담고 주문을 완료하면 이곳에서 진행 상태를 확인할 수 있습니다.',
+        actionLabel: '상품 보러가기',
+        onAction: () => Navigator.pushNamed(context, AppRoutes.products),
+      );
+    }
+
+    return Column(
+      children: [
+        for (final order in viewModel.orders) ...[
+          _OrderListItem(order: order),
+          const SizedBox(height: 12),
+        ],
+      ],
     );
   }
 }

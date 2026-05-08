@@ -6,6 +6,7 @@ import '../../../core/utils/formatters.dart';
 import '../../view_models/checkout_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/empty_state_panel.dart';
 import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 
@@ -55,6 +56,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
           builder: (context, _) {
             if (_viewModel.isLoading) {
               return const Center(child: CircularProgressIndicator());
+            }
+
+            if (_viewModel.items.isEmpty) {
+              return Center(
+                child: _ConstrainedContent(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: EmptyStatePanel(
+                      icon: Icons.receipt_long_outlined,
+                      title: '작성할 주문서가 없습니다',
+                      message: '예약 확인을 마친 상품이 있을 때 배송 정보와 결제 전 확인을 진행할 수 있습니다.',
+                      actionLabel: '예약함으로 이동',
+                      onAction: () =>
+                          Navigator.pushNamed(context, AppRoutes.basket),
+                    ),
+                  ),
+                ),
+              );
             }
 
             return CustomScrollView(

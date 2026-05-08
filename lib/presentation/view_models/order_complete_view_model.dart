@@ -2,16 +2,17 @@ import 'package:flutter/foundation.dart';
 
 import '../../data/models/local_basket_item_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
+import '../../data/repositories/repository_contracts.dart';
 
 class OrderCompleteViewModel extends ChangeNotifier {
   OrderCompleteViewModel({
     required this.orderId,
-    LocalBasketRepository? localBasketRepository,
+    LocalBasketRepositoryContract? localBasketRepository,
   }) : _localBasketRepository =
            localBasketRepository ?? LocalBasketRepository();
 
   final int orderId;
-  final LocalBasketRepository _localBasketRepository;
+  final LocalBasketRepositoryContract _localBasketRepository;
 
   bool _isLoading = true;
   List<LocalBasketItemModel> _items = const [];

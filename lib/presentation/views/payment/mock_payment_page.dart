@@ -6,6 +6,7 @@ import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/payment_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/empty_state_panel.dart';
 import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 
@@ -57,6 +58,24 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
           builder: (context, _) {
             if (_viewModel.isLoading) {
               return const Center(child: CircularProgressIndicator());
+            }
+
+            if (_viewModel.items.isEmpty) {
+              return Center(
+                child: _ConstrainedContent(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: EmptyStatePanel(
+                      icon: Icons.credit_card_off_outlined,
+                      title: '결제할 주문 정보가 없습니다',
+                      message: '주문서 작성을 완료한 뒤 결제 화면에서 예약 상품과 금액을 확인할 수 있습니다.',
+                      actionLabel: '예약함으로 이동',
+                      onAction: () =>
+                          Navigator.pushNamed(context, AppRoutes.basket),
+                    ),
+                  ),
+                ),
+              );
             }
 
             return CustomScrollView(

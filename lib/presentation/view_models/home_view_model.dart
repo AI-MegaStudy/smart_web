@@ -2,12 +2,13 @@ import 'package:flutter/foundation.dart';
 
 import '../../data/models/product_model.dart';
 import '../../data/repositories/product_repository.dart';
+import '../../data/repositories/repository_contracts.dart';
 
 class HomeViewModel extends ChangeNotifier {
-  HomeViewModel({ProductRepository? productRepository})
+  HomeViewModel({ProductRepositoryContract? productRepository})
     : _productRepository = productRepository ?? ProductRepository();
 
-  final ProductRepository _productRepository;
+  final ProductRepositoryContract _productRepository;
 
   bool _isLoading = true;
   List<ProductModel> _featuredProducts = const [];

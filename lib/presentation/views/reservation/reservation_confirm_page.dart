@@ -6,6 +6,7 @@ import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/reservation_confirm_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
+import '../../widgets/empty_state_panel.dart';
 import '../../widgets/flow_status_badge.dart';
 import '../../widgets/notice_box.dart';
 import '../../widgets/status_badge.dart';
@@ -55,6 +56,24 @@ class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
           builder: (context, _) {
             if (_viewModel.isLoading) {
               return const Center(child: CircularProgressIndicator());
+            }
+
+            if (_viewModel.items.isEmpty) {
+              return Center(
+                child: _ConstrainedContent(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: EmptyStatePanel(
+                      icon: Icons.shopping_basket_outlined,
+                      title: '확인할 예약 상품이 없습니다',
+                      message: '예약함에 수확 상품을 담은 뒤 주문 전 확인을 진행할 수 있습니다.',
+                      actionLabel: '상품 보러가기',
+                      onAction: () =>
+                          Navigator.pushNamed(context, AppRoutes.products),
+                    ),
+                  ),
+                ),
+              );
             }
 
             if (_viewModel.hasBlockingIssue && !_hasShownAvailabilityAlert) {

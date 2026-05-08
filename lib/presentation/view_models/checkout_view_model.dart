@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../data/models/local_basket_item_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
+import '../../data/repositories/repository_contracts.dart';
 
 class CheckoutAddressOption {
   const CheckoutAddressOption({
@@ -28,12 +29,12 @@ class CheckoutAddressOption {
 class CheckoutViewModel extends ChangeNotifier {
   CheckoutViewModel({
     required this.reservationId,
-    LocalBasketRepository? localBasketRepository,
+    LocalBasketRepositoryContract? localBasketRepository,
   }) : _localBasketRepository =
            localBasketRepository ?? LocalBasketRepository();
 
   final int reservationId;
-  final LocalBasketRepository _localBasketRepository;
+  final LocalBasketRepositoryContract _localBasketRepository;
 
   bool _isLoading = true;
   List<LocalBasketItemModel> _items = const [];
@@ -97,7 +98,12 @@ class CheckoutViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _items = await _localBasketRepository.fetchItems();
+    try {
+      _items = await _localBasketRepository.fetchItems();
+    } catch (_) {
+      _items = const [];
+    }
+
     _isLoading = false;
     notifyListeners();
   }

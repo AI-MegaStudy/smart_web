@@ -1,21 +1,27 @@
+import '../../core/utils/order_status_mapper.dart';
 import '../models/order_model.dart';
 import 'local_basket_repository.dart';
+import 'repository_contracts.dart';
 
-class OrderRepository {
-  OrderRepository({LocalBasketRepository? localBasketRepository})
+class OrderRepository implements OrderRepositoryContract {
+  OrderRepository({LocalBasketRepositoryContract? localBasketRepository})
     : _localBasketRepository = localBasketRepository ?? LocalBasketRepository();
 
-  final LocalBasketRepository _localBasketRepository;
+  final LocalBasketRepositoryContract _localBasketRepository;
   static final Set<int> _returnRequestedOrderIds = {};
 
+  @override
   Future<List<OrderModel>> fetchOrders() async {
     final items = await _localBasketRepository.fetchItems();
+    if (items.isEmpty) {
+      return const [];
+    }
 
     return [
       OrderModel(
         orderId: 8,
         orderNumber: 'ORD-20261012-008',
-        orderStatusLabel: _statusLabelFor(8, fallback: '농가 확인 중'),
+        orderStatusLabel: _statusLabelFor(8),
         receiverName: '홍길동',
         shippingAddress: '서울시 강남구 테헤란로 123',
         carrierName: 'CJ대한통운',
@@ -25,7 +31,7 @@ class OrderRepository {
       OrderModel(
         orderId: 14,
         orderNumber: 'ORD-20260928-014',
-        orderStatusLabel: _statusLabelFor(14, fallback: '배송 중'),
+        orderStatusLabel: _statusLabelFor(14),
         receiverName: '홍길동',
         shippingAddress: '서울시 강남구 테헤란로 123',
         carrierName: 'CJ대한통운',
@@ -35,7 +41,7 @@ class OrderRepository {
       OrderModel(
         orderId: 2,
         orderNumber: 'ORD-20260905-002',
-        orderStatusLabel: _statusLabelFor(2, fallback: '배송 완료'),
+        orderStatusLabel: _statusLabelFor(2),
         receiverName: '홍길동',
         shippingAddress: '서울시 강남구 테헤란로 123',
         carrierName: 'CJ대한통운',
@@ -45,16 +51,14 @@ class OrderRepository {
     ];
   }
 
+  @override
   Future<OrderModel> fetchOrderDetail(int orderId) async {
     final items = await _localBasketRepository.fetchItems();
 
     return OrderModel(
       orderId: orderId,
       orderNumber: 'ORD-20261012-${orderId.toString().padLeft(3, '0')}',
-      orderStatusLabel: _statusLabelFor(
-        orderId,
-        fallback: _fallbackStatusForDetail(orderId),
-      ),
+      orderStatusLabel: _statusLabelFor(orderId),
       receiverName: '홍길동',
       shippingAddress: '서울시 강남구 테헤란로 123',
       carrierName: 'CJ대한통운',
@@ -63,24 +67,18 @@ class OrderRepository {
     );
   }
 
+  @override
   Future<void> requestReturn(int orderId) async {
     _returnRequestedOrderIds.add(orderId);
   }
 
-  static String _statusLabelFor(int orderId, {required String fallback}) {
+  static String _statusLabelFor(int orderId) {
     if (_returnRequestedOrderIds.contains(orderId)) {
-      return '반품 요청 접수';
+      return OrderStatusMapper.labelOf(OrderStatusMapper.returnRequested);
     }
 
-    return fallback;
-  }
-
-  static String _fallbackStatusForDetail(int orderId) {
-    return switch (orderId) {
-      8 => '농가 확인 중',
-      14 => '배송 중',
-      2 => '배송 완료',
-      _ => '배송 중',
-    };
+    return OrderStatusMapper.labelOf(
+      OrderStatusMapper.demoStatusCodeForOrderId(orderId),
+    );
   }
 }

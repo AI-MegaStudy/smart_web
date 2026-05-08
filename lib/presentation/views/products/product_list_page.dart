@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../view_models/product_list_view_model.dart';
+import '../../widgets/empty_state_panel.dart';
 import '../../widgets/notice_box.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/status_badge.dart';
@@ -80,49 +81,7 @@ class _ProductListPageState extends State<ProductListPage> {
                   ),
                   SliverToBoxAdapter(
                     child: _ConstrainedContent(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final width = constraints.maxWidth;
-                          final columnCount = width >= 960
-                              ? 3
-                              : width >= 640
-                              ? 2
-                              : 1;
-
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.fromLTRB(
-                              columnCount == 1 ? 16 : 24,
-                              0,
-                              columnCount == 1 ? 16 : 24,
-                              columnCount == 1 ? 28 : 40,
-                            ),
-                            itemCount: _viewModel.filteredProducts.length,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: columnCount,
-                                  crossAxisSpacing: 14,
-                                  mainAxisSpacing: 14,
-                                  childAspectRatio: columnCount == 1
-                                      ? 1.03
-                                      : 0.82,
-                                ),
-                            itemBuilder: (context, index) {
-                              final product =
-                                  _viewModel.filteredProducts[index];
-                              return ProductCard(
-                                product: product,
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.productDetail,
-                                  arguments: product.productId,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+                      child: _ProductGrid(viewModel: _viewModel),
                     ),
                   ),
                 ],
@@ -131,6 +90,83 @@ class _ProductListPageState extends State<ProductListPage> {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ProductGrid extends StatelessWidget {
+  const _ProductGrid({required this.viewModel});
+
+  final ProductListViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final products = viewModel.filteredProducts;
+
+    if (viewModel.errorMessage != null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+        child: EmptyStatePanel(
+          icon: Icons.error_outline,
+          title: '상품을 불러오지 못했습니다',
+          message: viewModel.errorMessage!,
+          actionLabel: '다시 시도',
+          onAction: viewModel.load,
+        ),
+      );
+    }
+
+    if (products.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+        child: EmptyStatePanel(
+          icon: Icons.inventory_2_outlined,
+          title: '예약 가능한 상품이 없습니다',
+          message: '선택한 조건에 맞는 수확 상품이 없습니다. 다른 품종을 선택하거나 잠시 후 다시 확인해주세요.',
+          actionLabel: '전체 상품 보기',
+          onAction: () => viewModel.selectVariety(viewModel.varieties.first),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columnCount = width >= 960
+            ? 3
+            : width >= 640
+            ? 2
+            : 1;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            columnCount == 1 ? 16 : 24,
+            0,
+            columnCount == 1 ? 16 : 24,
+            columnCount == 1 ? 28 : 40,
+          ),
+          itemCount: products.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columnCount,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: columnCount == 1 ? 1.03 : 0.82,
+          ),
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return ProductCard(
+              product: product,
+              onTap: () => Navigator.pushNamed(
+                context,
+                AppRoutes.productDetail,
+                arguments: product.productId,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

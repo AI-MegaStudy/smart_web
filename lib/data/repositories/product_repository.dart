@@ -1,21 +1,26 @@
 import '../models/harvest_slot_model.dart';
 import '../models/product_model.dart';
+import 'repository_contracts.dart';
 
-class ProductRepository {
+class ProductRepository implements ProductRepositoryContract {
+  @override
   Future<List<ProductModel>> fetchProducts() async {
     return _products;
   }
 
+  @override
   Future<ProductModel> fetchProductDetail(int productId) async {
     return _products.firstWhere((product) => product.productId == productId);
   }
 
+  @override
   Future<List<HarvestSlotModel>> fetchProductSlots(int productId) async {
     return _slots
         .where((slot) => slot.productId == productId)
         .toList(growable: false);
   }
 
+  @override
   Future<List<ProductModel>> fetchFeaturedProducts() async {
     return _products.take(3).toList(growable: false);
   }
@@ -24,9 +29,9 @@ class ProductRepository {
 const _products = [
   ProductModel(
     productId: 3,
-    name: '후지 사과',
+    name: '양광 사과',
     farmName: '충주 햇살농원',
-    variety: '후지',
+    variety: '양광',
     packageUnitKg: 5,
     price: 39000,
     harvestStartLabel: '10.12',
@@ -37,9 +42,9 @@ const _products = [
   ),
   ProductModel(
     productId: 4,
-    name: '홍로 사과',
+    name: '부사 사과',
     farmName: '문경 바람농장',
-    variety: '홍로',
+    variety: '부사',
     packageUnitKg: 3,
     price: 32000,
     harvestStartLabel: '10.20',
@@ -50,9 +55,9 @@ const _products = [
   ),
   ProductModel(
     productId: 5,
-    name: '시나노골드 사과',
+    name: '양광 사과',
     farmName: '영주 별빛과수원',
-    variety: '시나노골드',
+    variety: '양광',
     packageUnitKg: 7.5,
     price: 68000,
     harvestStartLabel: '09.28',
@@ -63,9 +68,9 @@ const _products = [
   ),
   ProductModel(
     productId: 6,
-    name: '감홍 사과',
+    name: '부사 사과',
     farmName: '충주 온빛농장',
-    variety: '감홍',
+    variety: '부사',
     packageUnitKg: 5,
     price: 56000,
     harvestStartLabel: '10.05',

@@ -1,11 +1,12 @@
 import '../models/local_basket_item_model.dart';
+import 'repository_contracts.dart';
 
-class LocalBasketRepository {
+class LocalBasketRepository implements LocalBasketRepositoryContract {
   static final List<LocalBasketItemModel> _items = [
     const LocalBasketItemModel(
       slotId: 12,
       productId: 3,
-      productName: '후지 사과',
+      productName: '양광 사과',
       farmName: '충주 햇살농원',
       harvestStartLabel: '10.12',
       harvestEndLabel: '10.18',
@@ -16,7 +17,7 @@ class LocalBasketRepository {
     const LocalBasketItemModel(
       slotId: 21,
       productId: 4,
-      productName: '홍로 사과',
+      productName: '부사 사과',
       farmName: '문경 바람농장',
       harvestStartLabel: '10.20',
       harvestEndLabel: '10.27',
@@ -26,10 +27,12 @@ class LocalBasketRepository {
     ),
   ];
 
+  @override
   Future<List<LocalBasketItemModel>> fetchItems() async {
     return List.unmodifiable(_items);
   }
 
+  @override
   void upsertItem(LocalBasketItemModel item) {
     final index = _items.indexWhere(
       (savedItem) =>
@@ -45,6 +48,7 @@ class LocalBasketRepository {
     _items[index] = item;
   }
 
+  @override
   void removeItem(LocalBasketItemModel item) {
     _items.removeWhere(
       (savedItem) =>
@@ -53,6 +57,7 @@ class LocalBasketRepository {
     );
   }
 
+  @override
   void replaceItems(List<LocalBasketItemModel> items) {
     _items
       ..clear()

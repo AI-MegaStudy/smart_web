@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_screenutil: ^5.9.3
   kpostal_plus: ^1.0.3
+  url_launcher: ^6.3.2
   visibility_detector: ^0.4.0+2
 
 dev_dependencies:

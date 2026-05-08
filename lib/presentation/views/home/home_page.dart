@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 import '../../../app/router.dart';
@@ -630,7 +631,7 @@ class _HeroSection extends StatelessWidget {
                           ),
                           SizedBox(height: 5),
                           Text(
-                            '충주 햇살농원 후지 사과 수확 예정',
+                            '충주 햇살농원 양광 사과 수확 예정',
                             style: TextStyle(
                               color: Color(0xCCFFFFFF),
                               fontSize: 12,
@@ -739,7 +740,7 @@ class _HeroImageSliderState extends State<_HeroImageSlider> {
       title: '수확일이 확정된 사과만 예약하세요',
       description: '농가가 확정한 수확 예정 범위와 잔여 수량을 확인합니다.',
       badgeTitle: '10.12-10.18',
-      badgeDescription: '충주 햇살농원 후지 사과 수확 예정',
+      badgeDescription: '충주 햇살농원 양광 사과 수확 예정',
     ),
     _HeroSlide(
       imageUrl:
@@ -1436,103 +1437,92 @@ class _VarietySection extends StatelessWidget {
   Widget build(BuildContext context) {
     const varieties = [
       _VarietyInfo(
-        name: '후지',
-        tag: '저장성 좋은 기본 사과',
-        description: '단단한 식감과 안정적인 단맛으로 오래 두고 먹기 좋습니다.',
+        name: '양광',
+        tag: '향긋하고 산뜻한 단맛',
+        description: '향이 은은하고 단맛과 산미가 조화로워 수확 직후 신선하게 즐기기 좋습니다.',
         color: Color(0xFFE6483D),
       ),
       _VarietyInfo(
-        name: '홍로',
-        tag: '향이 좋은 선물용',
-        description: '향과 단맛이 좋아 추석 전후 선물용으로도 잘 어울립니다.',
+        name: '부사',
+        tag: '단단하고 오래 가는 사과',
+        description: '아삭한 식감과 안정적인 단맛이 좋아 가정용으로 오래 두고 먹기 좋습니다.',
         color: Color(0xFFC93845),
-      ),
-      _VarietyInfo(
-        name: '시나노골드',
-        tag: '산뜻한 노란 사과',
-        description: '단맛과 산미의 균형이 좋아 산뜻하게 즐기기 좋습니다.',
-        color: Color(0xFFD8A92B),
-      ),
-      _VarietyInfo(
-        name: '감홍',
-        tag: '진한 단맛과 풍부한 향',
-        description: '당도가 높고 향이 진해 깊은 맛을 선호하는 고객에게 좋습니다.',
-        color: Color(0xFF9D2E3A),
       ),
     ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 44),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: const Color(0xFFDCE3DD)),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0F000000),
-              blurRadius: 16,
-              offset: Offset(0, 6),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1132),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFDCE3DD)),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 16,
+                  offset: Offset(0, 6),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '품종 소개',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '예약 전 품종별 특징을 확인해보세요',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF163B2B),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 760),
-                child: Text(
-                  '같은 사과라도 품종마다 식감, 향, 보관성, 산미가 다릅니다. 원하는 맛에 맞춰 수확 슬롯을 선택해보세요.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF5F6C62),
-                    height: 1.5,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '품종 소개',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 22),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  final columnCount = width >= 980
-                      ? 4
-                      : width >= 640
-                      ? 2
-                      : 1;
-                  final itemWidth =
-                      (width - (14 * (columnCount - 1))) / columnCount;
+                  const SizedBox(height: 8),
+                  Text(
+                    '예약 전 품종별 특징을 확인해보세요',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF163B2B),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: Text(
+                      '같은 사과라도 품종마다 식감, 향, 보관성, 산미가 다릅니다. 원하는 맛에 맞춰 수확 슬롯을 선택해보세요.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: const Color(0xFF5F6C62),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      final columnCount = width >= 640 ? 2 : 1;
+                      final itemWidth =
+                          (width - (14 * (columnCount - 1))) / columnCount;
 
-                  return Wrap(
-                    spacing: 14,
-                    runSpacing: 14,
-                    children: [
-                      for (final variety in varieties)
-                        SizedBox(
-                          width: itemWidth,
-                          child: _VarietyCard(variety: variety),
-                        ),
-                    ],
-                  );
-                },
+                      return Wrap(
+                        spacing: 14,
+                        runSpacing: 14,
+                        children: [
+                          for (final variety in varieties)
+                            SizedBox(
+                              width: itemWidth,
+                              child: _VarietyCard(variety: variety),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -2362,8 +2352,9 @@ class _CleanSupportFooter extends StatelessWidget {
                   icon: Icons.support_agent_outlined,
                   title: '고객센터',
                   description: '예약, 배송, 반품 문의를 도와드립니다.',
-                  primary: '010-0000-0000',
+                  primary: '010-8953-2362',
                   secondary: '평일 AM 09:00 - PM 06:00',
+                  primaryAction: _SupportAction.phone,
                 ),
                 const _CleanSupportCard(
                   icon: Icons.info_outline,
@@ -2401,8 +2392,8 @@ class _CleanSupportFooter extends StatelessWidget {
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 760;
               final company = Text(
-                '상호: Harvest Slot | E-MAIL: support@harvestslot.kr\n'
-                '수확 슬롯 기반 사과 예약 서비스 | Copyright Harvest Slot. All Rights Reserved.',
+                '상호: Harvest Slot | 수확 슬롯 기반 사과 예약 서비스\n'
+                'E-MAIL: support@harvestslot.kr | Copyright Harvest Slot. All Rights Reserved.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   height: 1.6,
                   color: const Color(0xFF5F6C62),
@@ -2420,6 +2411,10 @@ class _CleanSupportFooter extends StatelessWidget {
                   _FooterLink(
                     label: '개인정보처리방침',
                     message: '개인정보처리방침 페이지는 백엔드 연결 후 별도 화면으로 확장할 수 있습니다.',
+                  ),
+                  const _FooterLink(
+                    label: '이메일 문의',
+                    supportAction: _SupportAction.email,
                   ),
                 ],
               );
@@ -2447,6 +2442,31 @@ class _CleanSupportFooter extends StatelessWidget {
   }
 }
 
+enum _SupportAction { phone, email }
+
+Future<void> _openSupportAction(
+  BuildContext context,
+  _SupportAction action,
+) async {
+  final uri = switch (action) {
+    _SupportAction.phone => Uri(scheme: 'tel', path: '01089532362'),
+    _SupportAction.email => Uri(
+      scheme: 'mailto',
+      path: 'support@harvestslot.kr',
+    ),
+  };
+  final failedMessage = switch (action) {
+    _SupportAction.phone => '전화 앱을 열 수 없습니다. 010-8953-2362로 직접 연락해주세요.',
+    _SupportAction.email =>
+      '메일 앱을 열 수 없습니다. support@harvestslot.kr로 직접 문의해주세요.',
+  };
+
+  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!launched && context.mounted) {
+    await showAppAlertDialog(context, message: failedMessage);
+  }
+}
+
 class _CleanSupportCard extends StatelessWidget {
   const _CleanSupportCard({
     required this.icon,
@@ -2454,6 +2474,7 @@ class _CleanSupportCard extends StatelessWidget {
     required this.description,
     required this.primary,
     required this.secondary,
+    this.primaryAction,
   });
 
   final IconData icon;
@@ -2461,6 +2482,55 @@ class _CleanSupportCard extends StatelessWidget {
   final String description;
   final String primary;
   final String secondary;
+  final _SupportAction? primaryAction;
+
+  Widget _supportTextButton({
+    required BuildContext context,
+    required String text,
+    required TextStyle? style,
+    required _SupportAction? action,
+  }) {
+    if (action == null) {
+      return Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: style,
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(4),
+        onTap: () => _openSupportAction(context, action),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: style,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                action == _SupportAction.phone
+                    ? Icons.call_outlined
+                    : Icons.mail_outline,
+                size: 17,
+                color: const Color(0xFF163B2B),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2496,20 +2566,23 @@ class _CleanSupportCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    primary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  _supportTextButton(
+                    context: context,
+                    text: primary,
+                    action: primaryAction,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF17241C),
+                      decoration: primaryAction == null
+                          ? TextDecoration.none
+                          : TextDecoration.underline,
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Text(
-                    secondary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  _supportTextButton(
+                    context: context,
+                    text: secondary,
+                    action: null,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF38322D),
                       fontWeight: FontWeight.w800,
@@ -2528,16 +2601,25 @@ class _CleanSupportCard extends StatelessWidget {
 }
 
 class _FooterLink extends StatelessWidget {
-  const _FooterLink({required this.label, required this.message});
+  const _FooterLink({required this.label, this.message, this.supportAction});
 
   final String label;
-  final String message;
+  final String? message;
+  final _SupportAction? supportAction;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(4),
-      onTap: () => showAppAlertDialog(context, message: message),
+      onTap: () {
+        final action = supportAction;
+        if (action != null) {
+          _openSupportAction(context, action);
+          return;
+        }
+
+        showAppAlertDialog(context, message: message ?? '준비 중인 메뉴입니다.');
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Text(

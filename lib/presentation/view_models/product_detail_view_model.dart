@@ -5,20 +5,21 @@ import '../../data/models/local_basket_item_model.dart';
 import '../../data/models/product_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
 import '../../data/repositories/product_repository.dart';
+import '../../data/repositories/repository_contracts.dart';
 
 class ProductDetailViewModel extends ChangeNotifier {
   ProductDetailViewModel({
     required int productId,
-    ProductRepository? productRepository,
-    LocalBasketRepository? localBasketRepository,
+    ProductRepositoryContract? productRepository,
+    LocalBasketRepositoryContract? localBasketRepository,
   }) : _productId = productId,
        _productRepository = productRepository ?? ProductRepository(),
        _localBasketRepository =
            localBasketRepository ?? LocalBasketRepository();
 
   final int _productId;
-  final ProductRepository _productRepository;
-  final LocalBasketRepository _localBasketRepository;
+  final ProductRepositoryContract _productRepository;
+  final LocalBasketRepositoryContract _localBasketRepository;
 
   bool _isLoading = true;
   ProductModel? _product;

@@ -2,14 +2,17 @@ import 'package:flutter/foundation.dart';
 
 import '../../data/models/order_model.dart';
 import '../../data/repositories/order_repository.dart';
+import '../../data/repositories/repository_contracts.dart';
 
 class OrderDetailViewModel extends ChangeNotifier {
-  OrderDetailViewModel({required int orderId, OrderRepository? orderRepository})
-    : _orderId = orderId,
-      _orderRepository = orderRepository ?? OrderRepository();
+  OrderDetailViewModel({
+    required int orderId,
+    OrderRepositoryContract? orderRepository,
+  }) : _orderId = orderId,
+       _orderRepository = orderRepository ?? OrderRepository();
 
   final int _orderId;
-  final OrderRepository _orderRepository;
+  final OrderRepositoryContract _orderRepository;
 
   bool _isLoading = true;
   OrderModel? _order;
