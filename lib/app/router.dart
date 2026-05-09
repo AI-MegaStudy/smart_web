@@ -17,10 +17,12 @@ import '../presentation/views/orders/order_complete_page.dart';
 import '../presentation/views/orders/order_detail_page.dart';
 import '../presentation/views/orders/my_orders_page.dart';
 import '../presentation/views/returns/return_complete_page.dart';
+import '../presentation/views/returns/my_returns_page.dart';
 import '../presentation/views/returns/return_request_page.dart';
 import '../presentation/views/auth/signup_page.dart';
 import '../presentation/views/auth/email_verify_page.dart';
 import '../presentation/views/auth/login_page.dart';
+import '../presentation/view_models/auth_view_model.dart';
 
 class AppRoutes {
   static const home = '/';
@@ -40,6 +42,7 @@ class AppRoutes {
   static const orderDetail = '/me/orders/detail';
   static const returnRequest = '/me/orders/return';
   static const returnComplete = '/me/orders/return/complete';
+  static const myReturns = '/me/returns';
   static const login = '/login';
   static const signup = '/signup';
   static const verifyEmail = '/verify-email';
@@ -64,11 +67,11 @@ class AppRoutes {
       orderComplete => OrderCompletePage(
         orderId: settings.arguments is int ? settings.arguments as int : 8,
       ),
-      myPage => MockAuthSession.isLoggedIn
-          ? const MyPage()
-          : const LoginPage(),
+      myPage => MockAuthSession.isLoggedIn ? const MyPage() : const LoginPage(),
       addressManage => const AddressManagePage(),
-      addressAdd => AddressAddPage(isEdit: settings.arguments == 'edit'),
+      addressAdd => AddressAddPage(
+        addressId: settings.arguments is int ? settings.arguments as int : null,
+      ),
       memberInfo => const MemberInfoPage(),
       memberEdit => const MemberEditPage(),
       myOrders => const MyOrdersPage(),
@@ -78,12 +81,22 @@ class AppRoutes {
       returnRequest => ReturnRequestPage(
         orderId: settings.arguments is int ? settings.arguments as int : 8,
       ),
+      myReturns => const MyReturnsPage(),
       returnComplete => ReturnCompletePage(
         orderId: settings.arguments is int ? settings.arguments as int : 8,
       ),
       login => const LoginPage(),
       signup => const SignupPage(),
-      verifyEmail => const EmailVerifyPage(),
+      verifyEmail => EmailVerifyPage(
+        email: settings.arguments is String
+            ? settings.arguments as String
+            : settings.arguments is SignupVerificationArgs
+            ? (settings.arguments as SignupVerificationArgs).email
+            : '',
+        signupDraft: settings.arguments is SignupVerificationArgs
+            ? settings.arguments as SignupVerificationArgs
+            : null,
+      ),
       _ => const ComingSoonPage(
         title: '준비 중',
         nextStep: '기획서 순서에 맞춰 화면을 하나씩 추가합니다.',

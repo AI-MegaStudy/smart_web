@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../view_models/auth_view_model.dart';
+import '../../widgets/app_alert_dialog.dart';
 import 'login_page.dart';
 
 class SignupPage extends StatefulWidget {
@@ -24,6 +25,31 @@ class _SignupPageState extends State<SignupPage> {
   void dispose() {
     _viewModel.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final success = await _viewModel.requestEmailVerification();
+    if (!mounted) {
+      return;
+    }
+
+    if (!success) {
+      showAppAlertDialog(
+        context,
+        message: _viewModel.errorMessage ?? '회원가입 정보를 확인해주세요.',
+      );
+      return;
+    }
+
+    showAppAlertDialog(
+      context,
+      message: '인증 메일을 보냈습니다. 이메일 인증을 완료하면 회원가입이 진행됩니다.',
+      onConfirm: () => Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.verifyEmail,
+        arguments: _viewModel.signupDraft,
+      ),
+    );
   }
 
   @override
@@ -98,21 +124,18 @@ class _SignupPageState extends State<SignupPage> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton(
-                      onPressed: () => Navigator.pushReplacementNamed(
-                        context,
-                        AppRoutes.login,
-                      ),
+                      onPressed: _viewModel.isSubmitting
+                          ? null
+                          : () => Navigator.pushReplacementNamed(
+                              context,
+                              AppRoutes.login,
+                            ),
                       child: const Text('로그인'),
                     ),
                     const SizedBox(width: 10),
                     FilledButton(
-                      onPressed: _viewModel.canSignup
-                          ? () => Navigator.pushNamed(
-                              context,
-                              AppRoutes.verifyEmail,
-                            )
-                          : null,
-                      child: const Text('가입하고 인증'),
+                      onPressed: _viewModel.canSignup ? _submit : null,
+                      child: Text(_viewModel.isSubmitting ? '가입 중' : '가입하기'),
                     ),
                   ],
                 ),

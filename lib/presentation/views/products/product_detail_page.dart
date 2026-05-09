@@ -152,7 +152,7 @@ class _PreparingDetailHero extends StatelessWidget {
                   const StatusBadge(label: '다음 수확 준비중'),
                   const SizedBox(height: 14),
                   Text(
-                    '${product.variety} 사과',
+                    product.name,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF163B2B),
@@ -160,7 +160,7 @@ class _PreparingDetailHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '${product.farmName} · 사과 · ${product.variety} 품종',
+                    '${product.farmName} · ${product.name}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: const Color(0xFF5F6C62),
                     ),
@@ -258,7 +258,7 @@ class _DetailHero extends StatelessWidget {
                   const StatusBadge(label: '수확 슬롯 예약'),
                   const SizedBox(height: 12),
                   Text(
-                    '${product.variety} 사과 예약',
+                    '${product.name} 예약',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF163B2B),
@@ -266,7 +266,7 @@ class _DetailHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '${product.farmName} · 사과 · ${product.variety} 품종',
+                    '${product.farmName} · ${product.name}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: const Color(0xFF5F6C62),
                     ),
@@ -351,6 +351,12 @@ class _DetailHero extends StatelessWidget {
                         return;
                       }
 
+                      if (!context.mounted) return;
+                      final goToBasket = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => const _BasketAddedDialog(),
+                      );
+                      if (!context.mounted || goToBasket != true) return;
                       Navigator.pushNamed(context, AppRoutes.basket);
                     },
                     icon: const Icon(Icons.add_shopping_cart),
@@ -394,6 +400,31 @@ class _DetailHero extends StatelessWidget {
   }
 }
 
+class _BasketAddedDialog extends StatelessWidget {
+  const _BasketAddedDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('예약함에 담았습니다'),
+      content: const Text(
+        '선택한 수확 상품을 예약함에 담았습니다. 계속 둘러보거나 예약함에서 내용을 확인할 수 있어요.',
+      ),
+      actions: [
+        OutlinedButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('계속 둘러보기'),
+        ),
+        FilledButton.icon(
+          onPressed: () => Navigator.pop(context, true),
+          icon: const Icon(Icons.shopping_basket_outlined),
+          label: const Text('예약함 보기'),
+        ),
+      ],
+    );
+  }
+}
+
 class _ProductStoryPanel extends StatelessWidget {
   const _ProductStoryPanel({required this.product});
 
@@ -413,7 +444,7 @@ class _ProductStoryPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${product.farmName} ${product.variety} 사과',
+              '${product.farmName} ${product.name}',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF163B2B),

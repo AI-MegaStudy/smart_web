@@ -1,23 +1,33 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/api/api_exception.dart';
 import '../../data/models/local_basket_item_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
+import '../../data/repositories/order_repository.dart';
+import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 
 class PaymentViewModel extends ChangeNotifier {
   PaymentViewModel({
     required this.orderId,
     LocalBasketRepositoryContract? localBasketRepository,
+    PaymentRepository? paymentRepository,
   }) : _localBasketRepository =
-           localBasketRepository ?? LocalBasketRepository();
+           localBasketRepository ?? LocalBasketRepository(),
+       _paymentRepository = paymentRepository ?? PaymentRepository();
 
   final int orderId;
   final LocalBasketRepositoryContract _localBasketRepository;
+  final PaymentRepository _paymentRepository;
 
   bool _isLoading = true;
+  bool _isSubmitting = false;
+  String? _errorMessage;
   List<LocalBasketItemModel> _items = const [];
 
   bool get isLoading => _isLoading;
+  bool get isSubmitting => _isSubmitting;
+  String? get errorMessage => _errorMessage;
   List<LocalBasketItemModel> get items => _items;
 
   int get totalAmount {
@@ -29,12 +39,42 @@ class PaymentViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _items = await _localBasketRepository.fetchItems();
+      final orderItems = OrderPaymentCache.itemsFor(orderId);
+      _items = orderItems.isNotEmpty
+          ? orderItems
+          : await _localBasketRepository.fetchItems();
     } catch (_) {
       _items = const [];
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<bool> approvePayment() async {
+    if (_isSubmitting) {
+      return false;
+    }
+
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _paymentRepository.mockApprove(
+        orderId: orderId,
+        idempotencyKey: 'payment-order-$orderId-mock-approve',
+      );
+      return true;
+    } on ApiException catch (error) {
+      _errorMessage = error.message;
+      return false;
+    } catch (_) {
+      _errorMessage = '결제를 승인하지 못했습니다.';
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
   }
 }

@@ -120,3 +120,17 @@ class MeResponse(BaseModel):
     owner_profile: dict | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MeUpdateRequest(BaseModel):
+    name: str = Field(min_length=2, json_schema_extra={"example": "홍길동"})
+    phone: str = Field(json_schema_extra={"example": "010-1111-2222"})
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "홍길동",
+                "phone": "010-1111-2222",
+            }
+        }
+    )

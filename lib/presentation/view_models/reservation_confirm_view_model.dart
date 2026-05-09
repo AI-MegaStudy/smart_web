@@ -1,35 +1,49 @@
 import 'package:flutter/foundation.dart';
 
-import '../../data/models/harvest_slot_model.dart';
+import '../../core/api/api_exception.dart';
 import '../../data/models/local_basket_item_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
-import '../../data/repositories/product_api_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
+import '../../data/repositories/reservation_repository.dart';
 
 class ReservationConfirmViewModel extends ChangeNotifier {
   ReservationConfirmViewModel({
     LocalBasketRepositoryContract? localBasketRepository,
-    ProductRepositoryContract? productRepository,
+    ReservationRepository? reservationRepository,
   }) : _localBasketRepository =
            localBasketRepository ?? LocalBasketRepository(),
-       _productRepository = productRepository ?? ProductApiRepository();
+       _reservationRepository =
+           reservationRepository ?? ReservationRepository();
 
   final LocalBasketRepositoryContract _localBasketRepository;
-  final ProductRepositoryContract _productRepository;
+  final ReservationRepository _reservationRepository;
 
   bool _isLoading = true;
   List<LocalBasketItemModel> _items = const [];
   Map<int, String> _itemIssues = const {};
+  ReservationPreviewResult? _preview;
+  String? _previewErrorMessage;
+  bool _isSubmitting = false;
 
   bool get isLoading => _isLoading;
+  bool get isSubmitting => _isSubmitting;
   List<LocalBasketItemModel> get items => _items;
   bool get hasBlockingIssue => _itemIssues.isNotEmpty;
+  String? get previewErrorMessage => _previewErrorMessage;
 
   double get totalReservedKg {
+    final previewTotal = _preview?.totalReservedKg;
+    if (previewTotal != null) {
+      return previewTotal;
+    }
     return _items.fold(0, (sum, item) => sum + item.reservedKg);
   }
 
   int get totalAmount {
+    final previewTotal = _preview?.totalAmount;
+    if (previewTotal != null) {
+      return previewTotal;
+    }
     return _items.fold(0, (sum, item) => sum + item.subtotalAmount);
   }
 
@@ -43,51 +57,64 @@ class ReservationConfirmViewModel extends ChangeNotifier {
 
     try {
       _items = await _localBasketRepository.fetchItems();
-      _itemIssues = await _validateItems(_items);
+      await _loadPreview();
     } catch (_) {
       _items = const [];
       _itemIssues = const {};
+      _preview = null;
+      _previewErrorMessage = '예약 정보를 불러오지 못했습니다.';
     }
 
     _isLoading = false;
     notifyListeners();
   }
 
-  Future<Map<int, String>> _validateItems(
-    List<LocalBasketItemModel> items,
-  ) async {
-    final issues = <int, String>{};
-
-    for (final item in items) {
-      final slots = await _productRepository.fetchProductSlots(item.productId);
-      final slot = _findSlot(slots, item.slotId);
-      if (slot == null) {
-        issues[item.slotId] = '선택한 수확 슬롯을 다시 확인해주세요.';
-        continue;
-      }
-
-      if (slot.slotStatus != 'OPEN') {
-        issues[item.slotId] = '현재 예약이 마감된 수확 슬롯입니다.';
-        continue;
-      }
-
-      final availablePackageCount = slot.availableKg ~/ item.packageUnitKg;
-      if (availablePackageCount < item.packageCount) {
-        issues[item.slotId] =
-            '현재 남은 수량으로는 $availablePackageCount박스까지 예약할 수 있습니다.';
-      }
+  Future<int?> createReservation() async {
+    if (_items.isEmpty || hasBlockingIssue || _isSubmitting) {
+      return null;
     }
 
-    return issues;
+    _isSubmitting = true;
+    _previewErrorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _reservationRepository.create(_items);
+      ReservationCheckoutCache.save(result.reservationId, _items);
+      _localBasketRepository.replaceItems(const []);
+      _items = const [];
+      return result.reservationId;
+    } on ApiException catch (error) {
+      _previewErrorMessage = error.message;
+      return null;
+    } catch (_) {
+      _previewErrorMessage = '예약을 생성하지 못했습니다.';
+      return null;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
   }
 
-  HarvestSlotModel? _findSlot(List<HarvestSlotModel> slots, int slotId) {
-    for (final slot in slots) {
-      if (slot.slotId == slotId) {
-        return slot;
-      }
+  Future<void> _loadPreview() async {
+    _preview = null;
+    _previewErrorMessage = null;
+    _itemIssues = const {};
+
+    if (_items.isEmpty) {
+      return;
     }
 
-    return null;
+    try {
+      _preview = await _reservationRepository.preview(_items);
+    } on ApiException catch (error) {
+      _previewErrorMessage = error.message;
+      _itemIssues = {
+        for (final item in _items) item.slotId: '예약 가능 수량과 금액을 다시 확인해주세요.',
+      };
+    } catch (_) {
+      _previewErrorMessage = '예약 가능 여부를 확인하지 못했습니다.';
+      _itemIssues = {for (final item in _items) item.slotId: '잠시 후 다시 확인해주세요.'};
+    }
   }
 }

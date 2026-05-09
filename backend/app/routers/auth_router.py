@@ -13,6 +13,7 @@ from backend.app.schemas.auth_schema import (
     EmailVerificationSendRequest,
     EmailVerifyRequest,
     LoginRequest,
+    MeUpdateRequest,
     SignupRequest,
 )
 from backend.app.schemas.common_schema import success_response
@@ -133,3 +134,12 @@ def issue_oauth2_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Ses
 @router.get("/me")
 def me(current_user: AuthenticatedUser = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
     return success_response(AuthService(db).get_me(current_user.account_id))
+
+
+@router.put("/me")
+def update_me(
+    payload: MeUpdateRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    return success_response(AuthService(db).update_me(current_user.account_id, **payload.model_dump()))

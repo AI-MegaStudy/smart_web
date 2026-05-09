@@ -378,18 +378,41 @@ class _CheckoutSummary extends StatelessWidget {
             _DeliverySummary(viewModel: viewModel),
             const SizedBox(height: 18),
             FilledButton.icon(
-              onPressed: () {
-                if (!viewModel.canSubmit) {
-                  showAppAlertDialog(
-                    context,
-                    message: '받는 분, 연락처, 배송지를 모두 입력해주세요.',
-                  );
-                  return;
-                }
+              onPressed: viewModel.isSubmitting
+                  ? null
+                  : () async {
+                      if (!viewModel.canSubmit) {
+                        await showAppAlertDialog(
+                          context,
+                          message: '받는 분, 연락처, 배송지를 모두 입력해주세요.',
+                        );
+                        return;
+                      }
 
-                Navigator.pushNamed(context, AppRoutes.payment, arguments: 8);
-              },
-              icon: const Icon(Icons.receipt_long_outlined),
+                      final orderId = await viewModel.createOrder();
+                      if (!context.mounted) return;
+
+                      if (orderId == null) {
+                        await showAppAlertDialog(
+                          context,
+                          message:
+                              viewModel.errorMessage ??
+                              '주문 생성에 실패했습니다. 예약 상태를 다시 확인해주세요.',
+                        );
+                        return;
+                      }
+
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.payment,
+                        arguments: orderId,
+                      );
+                    },
+              icon: Icon(
+                viewModel.isSubmitting
+                    ? Icons.hourglass_empty
+                    : Icons.receipt_long_outlined,
+              ),
               label: const Text('결제 화면으로 이동'),
             ),
           ],

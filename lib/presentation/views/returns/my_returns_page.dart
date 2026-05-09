@@ -2,26 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../data/models/order_model.dart';
-import '../../view_models/my_orders_view_model.dart';
+import '../../../data/repositories/return_repository.dart';
+import '../../view_models/my_returns_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
 import '../../widgets/empty_state_panel.dart';
 import '../../widgets/status_badge.dart';
 
-class MyOrdersPage extends StatefulWidget {
-  const MyOrdersPage({super.key});
+class MyReturnsPage extends StatefulWidget {
+  const MyReturnsPage({super.key});
 
   @override
-  State<MyOrdersPage> createState() => _MyOrdersPageState();
+  State<MyReturnsPage> createState() => _MyReturnsPageState();
 }
 
-class _MyOrdersPageState extends State<MyOrdersPage> {
-  late final MyOrdersViewModel _viewModel;
+class _MyReturnsPageState extends State<MyReturnsPage> {
+  late final MyReturnsViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = MyOrdersViewModel()..load();
+    _viewModel = MyReturnsViewModel()..load();
   }
 
   @override
@@ -56,7 +56,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                   child: _ConstrainedContent(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
-                      child: _OrderList(viewModel: _viewModel),
+                      child: _ReturnList(viewModel: _viewModel),
                     ),
                   ),
                 ),
@@ -69,37 +69,37 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
   }
 }
 
-class _OrderList extends StatelessWidget {
-  const _OrderList({required this.viewModel});
+class _ReturnList extends StatelessWidget {
+  const _ReturnList({required this.viewModel});
 
-  final MyOrdersViewModel viewModel;
+  final MyReturnsViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
     if (viewModel.errorMessage != null) {
       return EmptyStatePanel(
         icon: Icons.error_outline,
-        title: '주문 내역을 불러오지 못했습니다',
+        title: '반품 내역을 불러오지 못했습니다',
         message: viewModel.errorMessage!,
         actionLabel: '다시 시도',
         onAction: viewModel.load,
       );
     }
 
-    if (viewModel.orders.isEmpty) {
+    if (viewModel.returns.isEmpty) {
       return EmptyStatePanel(
-        icon: Icons.receipt_long_outlined,
-        title: '아직 주문 내역이 없습니다',
-        message: '예약 가능한 수확 상품을 담고 주문을 완료하면 이곳에서 진행 상태를 확인할 수 있습니다.',
-        actionLabel: '상품 보러가기',
-        onAction: () => Navigator.pushNamed(context, AppRoutes.products),
+        icon: Icons.assignment_return_outlined,
+        title: '접수된 반품 내역이 없습니다',
+        message: '배송 완료 후 반품을 신청하면 이곳에서 접수 상태와 환불 진행 상황을 확인할 수 있습니다.',
+        actionLabel: '주문 내역 보기',
+        onAction: () => Navigator.pushNamed(context, AppRoutes.myOrders),
       );
     }
 
     return Column(
       children: [
-        for (final order in viewModel.orders) ...[
-          _OrderListItem(order: order),
+        for (final item in viewModel.returns) ...[
+          _ReturnListItem(item: item),
           const SizedBox(height: 12),
         ],
       ],
@@ -155,7 +155,7 @@ class _PageIntro extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '주문 상태 추적',
+            '반품 상태 확인',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w900,
@@ -163,7 +163,7 @@ class _PageIntro extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '최근 예약 주문',
+            '내 반품 내역',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w900,
               color: const Color(0xFF163B2B),
@@ -171,7 +171,7 @@ class _PageIntro extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '예약 주문의 진행 상태와 결제 금액을 확인할 수 있습니다.',
+            '접수한 반품 요청의 상태와 요청 금액을 확인할 수 있습니다.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               height: 1.5,
               color: const Color(0xFF5F6C62),
@@ -183,18 +183,17 @@ class _PageIntro extends StatelessWidget {
   }
 }
 
-class _OrderListItem extends StatelessWidget {
-  const _OrderListItem({required this.order});
+class _ReturnListItem extends StatelessWidget {
+  const _ReturnListItem({required this.item});
 
-  final OrderModel order;
+  final ReturnHistoryItem item;
 
   @override
   Widget build(BuildContext context) {
-    if (order.items.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final firstItem = order.items.first;
+    final requestedAt = item.requestedAt;
+    final requestedAtLabel = requestedAt == null
+        ? '접수일 확인 중'
+        : '${requestedAt.toLocal().month.toString().padLeft(2, '0')}.${requestedAt.toLocal().day.toString().padLeft(2, '0')} ${requestedAt.toLocal().hour.toString().padLeft(2, '0')}:${requestedAt.toLocal().minute.toString().padLeft(2, '0')}';
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -207,73 +206,61 @@ class _OrderListItem extends StatelessWidget {
         onTap: () => Navigator.pushNamed(
           context,
           AppRoutes.orderDetail,
-          arguments: order.orderId,
+          arguments: item.orderId,
         ),
         child: Padding(
           padding: const EdgeInsets.all(18),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 720;
-              final content = Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const _OrderThumb(),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            children: [
+              const _ReturnThumb(),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.returnNumber.isEmpty ? '반품 요청' : item.returnNumber,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.orderNumber.isEmpty ? '주문번호 확인 중' : item.orderNumber,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF5F6C62),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        Text(
-                          order.orderNumber,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w900),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          order.items.length > 1
-                              ? '${firstItem.productName} 외 ${order.items.length - 1}건'
-                              : firstItem.productName,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: const Color(0xFF5F6C62)),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            StatusBadge(label: '${firstItem.packageCount}박스'),
-                            StatusBadge(
-                              label: '${formatKg(firstItem.reservedKg)}kg',
-                            ),
-                            StatusBadge(label: order.orderStatusLabel),
-                            StatusBadge(label: formatPrice(order.totalAmount)),
-                          ],
-                        ),
+                        StatusBadge(label: item.returnStatusLabel),
+                        StatusBadge(label: item.reasonLabel),
+                        StatusBadge(label: formatPrice(item.requestedAmount)),
+                        StatusBadge(label: requestedAtLabel),
                       ],
                     ),
-                  ),
-                ],
-              );
-
-              final arrow = Icon(
+                    if (item.reasonDetail.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        item.reasonDetail,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF4B584D),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(
                 Icons.chevron_right,
                 color: Theme.of(context).colorScheme.primary,
-              );
-
-              if (!isWide) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [content, const SizedBox(height: 12), arrow],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: content),
-                  arrow,
-                ],
-              );
-            },
+              ),
+            ],
           ),
         ),
       ),
@@ -281,8 +268,8 @@ class _OrderListItem extends StatelessWidget {
   }
 }
 
-class _OrderThumb extends StatelessWidget {
-  const _OrderThumb();
+class _ReturnThumb extends StatelessWidget {
+  const _ReturnThumb();
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +281,7 @@ class _OrderThumb extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(
-        Icons.receipt_long_outlined,
+        Icons.assignment_return_outlined,
         color: Theme.of(context).colorScheme.primary,
       ),
     );

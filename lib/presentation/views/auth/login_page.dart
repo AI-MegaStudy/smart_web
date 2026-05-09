@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
-import '../../../core/session/mock_auth_session.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 
@@ -27,6 +26,27 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    final success = await _viewModel.login();
+    if (!mounted) {
+      return;
+    }
+
+    if (!success) {
+      showAppAlertDialog(
+        context,
+        message: _viewModel.errorMessage ?? '로그인 정보를 확인해주세요.',
+      );
+      return;
+    }
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.home,
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,55 +61,49 @@ class _LoginPageState extends State<LoginPage> {
             'https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=1200&q=80',
         label: '예약 내역을 이어서 확인하세요',
         title: '로그인',
-        child: AuthCard(
-          title: '로그인',
-          description: '완료 후 이전 페이지 또는 홈으로 이동합니다.',
-          children: [
-            AuthTextField(
-              label: '이메일',
-              initialValue: _viewModel.email,
-              onChanged: _viewModel.updateEmail,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16),
-            AuthTextField(
-              label: '비밀번호',
-              initialValue: _viewModel.password,
-              onChanged: _viewModel.updatePassword,
-              obscureText: true,
-            ),
-            const SizedBox(height: 22),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+        child: AnimatedBuilder(
+          animation: _viewModel,
+          builder: (context, _) {
+            return AuthCard(
+              title: '로그인',
+              description: '예약과 배송 안내를 확인하려면 로그인해주세요.',
               children: [
-                OutlinedButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, AppRoutes.signup),
-                  child: const Text('회원가입'),
+                AuthTextField(
+                  label: '이메일',
+                  initialValue: _viewModel.email,
+                  onChanged: _viewModel.updateEmail,
+                  keyboardType: TextInputType.emailAddress,
                 ),
-                const SizedBox(width: 10),
-                FilledButton(
-                  onPressed: () {
-                    if (!_viewModel.canLogin) {
-                      showAppAlertDialog(
-                        context,
-                        message: '이메일과 비밀번호를 모두 입력해주세요.',
-                      );
-                      return;
-                    }
-
-                    MockAuthSession.login();
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.home,
-                      (route) => false,
-                    );
-                  },
-                  child: const Text('로그인'),
+                const SizedBox(height: 16),
+                AuthTextField(
+                  label: '비밀번호',
+                  initialValue: _viewModel.password,
+                  onChanged: _viewModel.updatePassword,
+                  obscureText: true,
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton(
+                      onPressed: _viewModel.isSubmitting
+                          ? null
+                          : () => Navigator.pushReplacementNamed(
+                              context,
+                              AppRoutes.signup,
+                            ),
+                      child: const Text('회원가입'),
+                    ),
+                    const SizedBox(width: 10),
+                    FilledButton(
+                      onPressed: _viewModel.canLogin ? _submit : null,
+                      child: Text(_viewModel.isSubmitting ? '확인 중' : '로그인'),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

@@ -1,8 +1,12 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/api/api_exception.dart';
 import '../../data/models/local_basket_item_model.dart';
+import '../../data/repositories/address_repository.dart';
 import '../../data/repositories/local_basket_repository.dart';
+import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
+import '../../data/repositories/reservation_repository.dart';
 
 class CheckoutAddressOption {
   const CheckoutAddressOption({
@@ -30,53 +34,51 @@ class CheckoutViewModel extends ChangeNotifier {
   CheckoutViewModel({
     required this.reservationId,
     LocalBasketRepositoryContract? localBasketRepository,
+    OrderRepository? orderRepository,
+    AddressRepository? addressRepository,
   }) : _localBasketRepository =
-           localBasketRepository ?? LocalBasketRepository();
+           localBasketRepository ?? LocalBasketRepository(),
+       _orderRepository = orderRepository ?? OrderRepository(),
+       _addressRepository = addressRepository ?? AddressRepository();
 
   final int reservationId;
   final LocalBasketRepositoryContract _localBasketRepository;
+  final OrderRepository _orderRepository;
+  final AddressRepository _addressRepository;
 
   bool _isLoading = true;
+  bool _isSubmitting = false;
+  String? _errorMessage;
   List<LocalBasketItemModel> _items = const [];
   bool useDefaultAddress = true;
   int selectedAddressId = 1;
 
-  final String defaultReceiverName = '홍길동';
-  final String defaultReceiverPhone = '010-1111-2222';
-  final String defaultShippingAddress = '서울시 강남구 테헤란로 123';
-
-  String receiverName = '홍길동';
-  String receiverPhone = '010-1111-2222';
-  String shippingAddress = '서울시 강남구 테헤란로 123';
+  String receiverName = '';
+  String receiverPhone = '';
+  String shippingAddress = '';
   String deliveryMemo = '문 앞에 놓아주세요';
 
-  final List<CheckoutAddressOption> addressOptions = const [
-    CheckoutAddressOption(
-      id: 1,
-      label: '내집',
-      receiverName: '홍길동',
-      receiverPhone: '010-1111-2222',
-      address: '서울시 강남구 테헤란로 123',
-      memo: '문 앞에 놓아주세요',
-      isDefault: true,
-      isRecent: true,
-    ),
-    CheckoutAddressOption(
-      id: 2,
-      label: '부모님댁',
-      receiverName: '홍길순',
-      receiverPhone: '010-2222-3333',
-      address: '경기도 수원시 영통구 광교중앙로 45',
-      memo: '배송 전 연락주세요',
-    ),
-  ];
+  List<CheckoutAddressOption> _addressOptions = const [];
 
   bool get isLoading => _isLoading;
+  bool get isSubmitting => _isSubmitting;
+  String? get errorMessage => _errorMessage;
   List<LocalBasketItemModel> get items => _items;
+  List<CheckoutAddressOption> get addressOptions => _addressOptions;
   CheckoutAddressOption get selectedAddress {
-    return addressOptions.firstWhere(
+    if (_addressOptions.isEmpty) {
+      return const CheckoutAddressOption(
+        id: 0,
+        label: '',
+        receiverName: '',
+        receiverPhone: '',
+        address: '',
+        memo: '',
+      );
+    }
+    return _addressOptions.firstWhere(
       (address) => address.id == selectedAddressId,
-      orElse: () => addressOptions.first,
+      orElse: () => _addressOptions.first,
     );
   }
 
@@ -99,13 +101,65 @@ class CheckoutViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _items = await _localBasketRepository.fetchItems();
+      final reservationItems = ReservationCheckoutCache.itemsFor(reservationId);
+      _items = reservationItems.isNotEmpty
+          ? reservationItems
+          : await _localBasketRepository.fetchItems();
     } catch (_) {
       _items = const [];
     }
 
+    try {
+      final addresses = await _addressRepository.fetchAddresses();
+      _addressOptions = addresses
+          .map(_checkoutAddressFromModel)
+          .toList(growable: false);
+      if (_addressOptions.isNotEmpty) {
+        final defaultAddress = _addressOptions.firstWhere(
+          (address) => address.isDefault,
+          orElse: () => _addressOptions.first,
+        );
+        _selectAddress(defaultAddress.id, notify: false);
+      }
+    } catch (_) {
+      _addressOptions = const [];
+    }
+
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<int?> createOrder() async {
+    if (!canSubmit || _isSubmitting) {
+      _errorMessage = '받는 분, 연락처, 배송지를 모두 입력해주세요.';
+      notifyListeners();
+      return null;
+    }
+
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _orderRepository.createFromReservation(
+        reservationId: reservationId,
+        receiverName: receiverName.trim(),
+        receiverPhone: receiverPhone.trim(),
+        shippingAddress: shippingAddress.trim(),
+        deliveryMemo: deliveryMemo.trim(),
+      );
+      OrderPaymentCache.save(result.orderId, _items);
+      return result.orderId;
+    } on ApiException catch (error) {
+      _errorMessage = error.message;
+      return null;
+    } catch (_) {
+      _errorMessage = '주문을 생성하지 못했습니다.';
+      return null;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
   }
 
   void updateReceiverName(String value) {
@@ -134,16 +188,25 @@ class CheckoutViewModel extends ChangeNotifier {
   void updateUseDefaultAddress(bool value) {
     useDefaultAddress = value;
     if (value) {
-      selectAddress(1);
+      if (_addressOptions.isNotEmpty) {
+        _selectAddress(_addressOptions.first.id);
+      }
       return;
     }
     notifyListeners();
   }
 
   void selectAddress(int addressId) {
-    final address = addressOptions.firstWhere(
+    _selectAddress(addressId);
+  }
+
+  void _selectAddress(int addressId, {bool notify = true}) {
+    if (_addressOptions.isEmpty) {
+      return;
+    }
+    final address = _addressOptions.firstWhere(
       (option) => option.id == addressId,
-      orElse: () => addressOptions.first,
+      orElse: () => _addressOptions.first,
     );
 
     selectedAddressId = address.id;
@@ -152,6 +215,21 @@ class CheckoutViewModel extends ChangeNotifier {
     receiverPhone = address.receiverPhone;
     shippingAddress = address.address;
     deliveryMemo = address.memo;
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  CheckoutAddressOption _checkoutAddressFromModel(CustomerAddress address) {
+    return CheckoutAddressOption(
+      id: address.addressId,
+      label: address.label.isEmpty ? '기본 배송지' : address.label,
+      receiverName: address.receiverName,
+      receiverPhone: address.receiverPhone,
+      address: address.fullAddress,
+      memo: address.deliveryMemo,
+      isDefault: address.isDefault,
+      isRecent: address.isRecent,
+    );
   }
 }

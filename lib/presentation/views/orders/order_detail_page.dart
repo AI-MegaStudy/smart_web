@@ -4,6 +4,8 @@ import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../../data/models/order_model.dart';
+import '../../../data/repositories/payment_repository.dart';
+import '../../../data/repositories/shipment_repository.dart';
 import '../../view_models/order_detail_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
 import '../../widgets/flow_status_badge.dart';
@@ -76,8 +78,24 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final isWide = constraints.maxWidth >= 980;
-                          final progress = _ProgressPanel(order: order);
-                          final summary = _OrderSummary(order: order);
+                          final progress = Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _ProgressPanel(
+                                order: order,
+                                shipment: _viewModel.shipment,
+                              ),
+                              const SizedBox(height: 18),
+                              _PaymentInfoPanel(
+                                payments: _viewModel.payments,
+                                errorMessage: _viewModel.paymentErrorMessage,
+                              ),
+                            ],
+                          );
+                          final summary = _OrderSummary(
+                            order: order,
+                            shipment: _viewModel.shipment,
+                          );
 
                           if (!isWide) {
                             return Column(
@@ -192,69 +210,60 @@ class _PageIntro extends StatelessWidget {
 }
 
 class _ProgressPanel extends StatelessWidget {
-  const _ProgressPanel({required this.order});
+  const _ProgressPanel({required this.order, required this.shipment});
 
   final OrderModel order;
+  final ShipmentInfo? shipment;
 
   @override
   Widget build(BuildContext context) {
-    final isReturnRequested = order.orderStatusLabel == '반품 요청 접수';
-    final isDelivered = order.orderStatusLabel == '배송 완료' || isReturnRequested;
-    final isShipped = order.orderStatusLabel == '배송 중' || isDelivered;
-    final isFarmChecking = order.orderStatusLabel == '농가 확인 중';
-    final shipmentDescription = isShipped
-        ? '${order.carrierName} ${order.trackingNumber}로 배송이 진행 중입니다.'
-        : '발송이 시작되면 택배사와 송장번호를 안내합니다.';
+    final status = order.orderStatusLabel;
+    final paidTimeLabel = _dateTimeLabel(order.paidAt ?? order.orderedAt);
+    final isDelivered = status == '배송 완료' || status == '반품 요청 접수';
+    final isShipmentDelivered = shipment?.shipmentStatusLabel == '배송 완료';
+    final isShipmentShipped = shipment?.shipmentStatusLabel == '배송 중';
+    final isShipped = status == '배송 중' || isDelivered || isShipmentShipped;
+    final isFarmChecking = status == '농가 확인 중';
+    final isPaid = status == '결제 완료' || isFarmChecking || isShipped;
+    final trackingDescription = shipment?.hasTrackingInfo == true
+        ? '${shipment!.carrierName} ${shipment!.trackingNumber}로 배송 중입니다.'
+        : '배송이 시작되면 운송장 정보가 표시됩니다.';
+
     final steps = [
-      const _ProgressStepData(
+      _ProgressStepData(
         label: '결제 완료',
-        description: '카드 결제가 승인되었습니다.',
-        time: '10.12 14:02',
-        completed: true,
-        current: false,
+        description: '결제 승인이 완료되었습니다.',
+        time: paidTimeLabel,
+        completed: isPaid,
+        current: status == '결제 완료',
         icon: Icons.check,
       ),
       _ProgressStepData(
         label: '농가 확인 중',
-        description: '농가가 수확 가능 수량을 최종 확인하고 있습니다.',
-        time: isFarmChecking ? '현재' : '10.12 16:20',
-        completed: true,
+        description: '농가가 수확 가능 수량을 확인하고 있습니다.',
+        time: isFarmChecking ? '현재' : '예정',
+        completed: isFarmChecking || isShipped,
         current: isFarmChecking,
         icon: isFarmChecking ? Icons.hourglass_top : Icons.check,
       ),
       _ProgressStepData(
-        label: '농가 승인 완료',
-        description: '농가가 주문 수량을 확인하고 발송 준비를 시작했습니다.',
-        time: isFarmChecking ? '예정' : '10.18 09:40',
-        completed: !isFarmChecking,
-        current: false,
-        icon: Icons.check,
-      ),
-      _ProgressStepData(
         label: '배송 중',
-        description: shipmentDescription,
-        time: isShipped ? '10.18 13:20' : '예정',
+        description: trackingDescription,
+        time: isShipped ? _dateTimeLabel(shipment?.shippedAt) : '예정',
         completed: isShipped,
-        current: order.orderStatusLabel == '배송 중',
+        current: status == '배송 중' || isShipmentShipped,
         icon: Icons.local_shipping_outlined,
       ),
       _ProgressStepData(
         label: '배송 완료',
-        description: '배송이 완료되면 조건에 따라 반품 신청이 가능합니다.',
-        time: isDelivered ? '10.19 11:10' : '예정',
-        completed: isDelivered,
-        current: isDelivered && !isReturnRequested,
+        description: '배송 완료 후 조건에 따라 반품 신청이 가능합니다.',
+        time: isDelivered || isShipmentDelivered
+            ? _dateTimeLabel(shipment?.deliveredAt)
+            : '예정',
+        completed: isDelivered || isShipmentDelivered,
+        current: isDelivered || isShipmentDelivered,
         icon: Icons.check,
       ),
-      if (isReturnRequested)
-        const _ProgressStepData(
-          label: '반품 요청 접수',
-          description: '상품 상태 확인 후 환불 가능 금액을 안내합니다.',
-          time: '현재',
-          completed: true,
-          current: true,
-          icon: Icons.assignment_return_outlined,
-        ),
     ];
 
     return DecoratedBox(
@@ -284,6 +293,18 @@ class _ProgressPanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _dateTimeLabel(DateTime? value) {
+    if (value == null) {
+      return '확인 중';
+    }
+    final local = value.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$month.$day $hour:$minute';
   }
 }
 
@@ -352,9 +373,9 @@ class _ProgressStep extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Text(
-          step.time,
+          step.current ? '현재' : step.time,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             color: const Color(0xFF101813),
           ),
         ),
@@ -363,22 +384,142 @@ class _ProgressStep extends StatelessWidget {
   }
 }
 
+class _PaymentInfoPanel extends StatelessWidget {
+  const _PaymentInfoPanel({required this.payments, required this.errorMessage});
+
+  final List<PaymentHistoryItem> payments;
+  final String? errorMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFDCE3DD)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '결제 정보',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 14),
+            if (errorMessage != null)
+              NoticeBox(icon: Icons.info_outline, message: errorMessage!)
+            else if (payments.isEmpty)
+              const NoticeBox(
+                icon: Icons.info_outline,
+                message: '아직 결제 내역이 없습니다.',
+              )
+            else
+              for (final payment in payments) ...[
+                _PaymentInfoRow(payment: payment),
+                if (payment != payments.last)
+                  const Divider(height: 26, color: Color(0xFFDCE3DD)),
+              ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentInfoRow extends StatelessWidget {
+  const _PaymentInfoRow({required this.payment});
+
+  final PaymentHistoryItem payment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5F2E9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.credit_card_outlined,
+                color: Theme.of(context).colorScheme.primary,
+                size: 19,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    payment.paymentMethodLabel,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF101813),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    payment.paymentStatusLabel,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF657166),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              formatPrice(payment.approvedAmount),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        if (payment.requestedAmount != payment.approvedAmount) ...[
+          const SizedBox(height: 14),
+          _SummaryRow(
+            label: '요청 금액',
+            value: formatPrice(payment.requestedAmount),
+          ),
+          const SizedBox(height: 8),
+          _SummaryRow(
+            label: '승인 금액',
+            value: formatPrice(payment.approvedAmount),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _OrderSummary extends StatelessWidget {
-  const _OrderSummary({required this.order});
+  const _OrderSummary({required this.order, required this.shipment});
 
   final OrderModel order;
+  final ShipmentInfo? shipment;
 
   @override
   Widget build(BuildContext context) {
     final canReturn = order.orderStatusLabel == '배송 완료';
-    final hasShipmentInfo =
-        order.orderStatusLabel == '배송 중' ||
-        order.orderStatusLabel == '배송 완료' ||
-        order.orderStatusLabel == '반품 요청 접수';
-    final carrierDisplay = hasShipmentInfo ? order.carrierName : '배송 준비 중';
+    final hasShipmentInfo = shipment?.hasTrackingInfo == true;
+    final carrierDisplay = hasShipmentInfo ? shipment!.carrierName : '배송 준비 중';
     final trackingDisplay = hasShipmentInfo
-        ? order.trackingNumber
-        : '송장번호 준비 중';
+        ? shipment!.trackingNumber
+        : '운송장번호 준비 중';
+    final shipmentStatusDisplay = shipment?.shipmentStatusLabel ?? '배송 준비 중';
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -414,18 +555,15 @@ class _OrderSummary extends StatelessWidget {
               value: '${formatKg(order.totalReservedKg)}kg',
             ),
             const SizedBox(height: 10),
+            _SummaryRow(label: '배송 상태', value: shipmentStatusDisplay),
+            const SizedBox(height: 10),
             _SummaryRow(label: '택배사', value: carrierDisplay),
             const SizedBox(height: 10),
-            _SummaryRow(label: '송장번호', value: trackingDisplay),
+            _SummaryRow(label: '운송장번호', value: trackingDisplay),
             const SizedBox(height: 18),
             const NoticeBox(message: '수확 일정은 기상과 생육 상황에 따라 조정될 수 있습니다.'),
             const SizedBox(height: 18),
-            if (order.orderStatusLabel == '반품 요청 접수')
-              const NoticeBox(
-                icon: Icons.assignment_turned_in_outlined,
-                message: '반품 요청이 접수되었습니다. 상품 상태 확인 후 환불 가능 금액을 안내합니다.',
-              )
-            else if (canReturn)
+            if (canReturn)
               OutlinedButton.icon(
                 onPressed: () => Navigator.pushNamed(
                   context,
@@ -454,6 +592,13 @@ class _OrderItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chips = [
+      if (item.harvestStartLabel.isNotEmpty || item.harvestEndLabel.isNotEmpty)
+        '${item.harvestStartLabel}-${item.harvestEndLabel}',
+      '${item.packageCount}박스',
+      '${formatKg(item.reservedKg)}kg',
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -463,14 +608,40 @@ class _OrderItem extends StatelessWidget {
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 6),
-        Text(
-          '${item.harvestStartLabel}-${item.harvestEndLabel} · ${item.packageCount}박스 · ${formatKg(item.reservedKg)}kg',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF657166)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [for (final chip in chips) _OrderItemChip(label: chip)],
         ),
       ],
+    );
+  }
+}
+
+class _OrderItemChip extends StatelessWidget {
+  const _OrderItemChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF5F0),
+        border: Border.all(color: const Color(0xFFD4E1D8)),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: const Color(0xFF24533C),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
     );
   }
 }

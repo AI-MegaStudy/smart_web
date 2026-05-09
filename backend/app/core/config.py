@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     cors_allowed_origins: str | list[str] = "*"
-    email_verification_required: bool = False
+    email_verification_required: bool = True
     email_verification_expire_minutes: int = 5
     email_verification_resend_cooldown_seconds: int = 60
     email_verification_max_attempts: int = 5

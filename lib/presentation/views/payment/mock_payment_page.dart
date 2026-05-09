@@ -149,12 +149,22 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
     if (_selectedPaymentMethod != '카드 간편결제') {
       await showAppAlertDialog(
         context,
-        message: '해당 결제 수단은 준비 중입니다. 현재는 카드 간편결제로 시연할 수 있습니다.',
+        message: '해당 결제 수단은 준비 중입니다. 현재는 카드 간편결제만 선택할 수 있습니다.',
       );
       return;
     }
 
+    final approved = await _viewModel.approvePayment();
     if (!mounted) return;
+
+    if (!approved) {
+      await showAppAlertDialog(
+        context,
+        message: _viewModel.errorMessage ?? '결제 승인에 실패했습니다.',
+      );
+      return;
+    }
+
     Navigator.pushNamed(
       context,
       AppRoutes.orderComplete,
@@ -420,8 +430,12 @@ class _PaymentSummary extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             FilledButton.icon(
-              onPressed: onPay,
-              icon: const Icon(Icons.credit_score_outlined),
+              onPressed: viewModel.isSubmitting ? null : onPay,
+              icon: Icon(
+                viewModel.isSubmitting
+                    ? Icons.hourglass_empty
+                    : Icons.credit_score_outlined,
+              ),
               label: const Text('결제하기'),
             ),
           ],

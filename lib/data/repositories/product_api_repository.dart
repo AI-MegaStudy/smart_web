@@ -121,7 +121,15 @@ class ProductApiRepository implements ProductRepositoryContract {
 
   String _productName(Map<String, dynamic> json) {
     final name = json['product_name']?.toString() ?? '예약 사과';
-    return name.trim().isEmpty ? '예약 사과' : name.trim();
+    final displayName = name.replaceAll(RegExp(r'\s*\d+(\.\d+)?kg'), '').trim();
+    final variety = _varietyName(json['variety']);
+    final fruit = _fruitName(json['fruit_type'], displayName);
+
+    if (variety.isNotEmpty && fruit.isNotEmpty) {
+      return '$variety $fruit';
+    }
+
+    return displayName.isEmpty ? '예약 사과' : displayName;
   }
 
   String _varietyName(Object? value) {
@@ -129,8 +137,20 @@ class ProductApiRepository implements ProductRepositoryContract {
     return switch (raw?.toLowerCase()) {
       'fuji' => '부사',
       'yanggwang' || 'yangkwang' => '양광',
+      'shingo' => '신고',
       null || '' => '사과',
       _ => raw!,
+    };
+  }
+
+  String _fruitName(Object? fruitType, String displayName) {
+    final raw = fruitType?.toString().trim().toLowerCase();
+    return switch (raw) {
+      'apple' => '사과',
+      'pear' => '배',
+      _ when displayName.contains('사과') => '사과',
+      _ when displayName.contains('배') => '배',
+      _ => '',
     };
   }
 

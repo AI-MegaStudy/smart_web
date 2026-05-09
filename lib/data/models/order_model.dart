@@ -10,6 +10,8 @@ class OrderModel {
     required this.carrierName,
     required this.trackingNumber,
     required this.items,
+    this.orderedAt,
+    this.paidAt,
   });
 
   final int orderId;
@@ -20,6 +22,8 @@ class OrderModel {
   final String carrierName;
   final String trackingNumber;
   final List<LocalBasketItemModel> items;
+  final DateTime? orderedAt;
+  final DateTime? paidAt;
 
   int get totalAmount {
     return items.fold(0, (sum, item) => sum + item.subtotalAmount);

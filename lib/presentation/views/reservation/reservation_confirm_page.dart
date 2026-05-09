@@ -409,14 +409,33 @@ class _ReservationSummary extends StatelessWidget {
             ],
             const SizedBox(height: 18),
             FilledButton.icon(
-              onPressed: viewModel.hasBlockingIssue
+              onPressed: viewModel.hasBlockingIssue || viewModel.isSubmitting
                   ? null
-                  : () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.checkout,
-                      arguments: 5,
-                    ),
-              icon: const Icon(Icons.check_circle_outline),
+                  : () async {
+                      final reservationId = await viewModel.createReservation();
+                      if (!context.mounted) return;
+
+                      if (reservationId == null) {
+                        await showAppAlertDialog(
+                          context,
+                          message:
+                              viewModel.previewErrorMessage ??
+                              '예약 생성에 실패했습니다. 예약 내용을 다시 확인해주세요.',
+                        );
+                        return;
+                      }
+
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.checkout,
+                        arguments: reservationId,
+                      );
+                    },
+              icon: Icon(
+                viewModel.isSubmitting
+                    ? Icons.hourglass_empty
+                    : Icons.check_circle_outline,
+              ),
               label: const Text('주문서 작성하기'),
             ),
             if (viewModel.hasBlockingIssue) ...[

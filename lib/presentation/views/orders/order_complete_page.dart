@@ -106,6 +106,8 @@ class _CompleteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final errorMessage = viewModel.errorMessage;
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -118,13 +120,13 @@ class _CompleteCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Icon(
-              Icons.check_circle,
+              errorMessage == null ? Icons.check_circle : Icons.info_outline,
               color: Theme.of(context).colorScheme.primary,
               size: 74,
             ),
             const SizedBox(height: 18),
             Text(
-              '예약 주문이 완료되었습니다',
+              errorMessage == null ? '예약 주문이 완료되었습니다' : '주문 정보를 확인 중입니다',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w900,
@@ -133,7 +135,8 @@ class _CompleteCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '${viewModel.orderNumber} 결제가 완료되었습니다. 이제 농가가 수확 가능 수량을 최종 확인하고, 승인 이후 배송 상태를 주문 상세에서 안내합니다.',
+              errorMessage ??
+                  '${viewModel.orderNumber} 결제가 완료되었습니다. 농가가 수확 가능 수량을 확인한 뒤 주문 상세에서 진행 상태를 안내합니다.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 height: 1.5,
@@ -145,9 +148,9 @@ class _CompleteCard extends StatelessWidget {
               alignment: WrapAlignment.center,
               spacing: 8,
               runSpacing: 8,
-              children: const [
-                StatusBadge(label: '결제 완료'),
-                StatusBadge(label: '농가 확인 중'),
+              children: [
+                StatusBadge(label: viewModel.statusLabel),
+                const StatusBadge(label: '수확 직배송'),
               ],
             ),
             const SizedBox(height: 24),

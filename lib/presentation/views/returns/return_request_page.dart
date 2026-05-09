@@ -619,29 +619,41 @@ class _ReturnSummary extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () async {
-                    if (viewModel.reasonDetail.trim().length < 10) {
-                      showAppAlertDialog(
-                        context,
-                        message: '반품 상세 사유를 10자 이상 입력해주세요.',
-                      );
-                      return;
-                    }
+                  onPressed: viewModel.isSubmitting
+                      ? null
+                      : () async {
+                          if (viewModel.reasonDetail.trim().length < 10) {
+                            showAppAlertDialog(
+                              context,
+                              message: '반품 상세 사유를 10자 이상 입력해주세요.',
+                            );
+                            return;
+                          }
 
-                    await viewModel.submitReturnRequest();
-                    if (!context.mounted) {
-                      return;
-                    }
+                          final submitted = await viewModel
+                              .submitReturnRequest();
+                          if (!context.mounted) {
+                            return;
+                          }
+                          if (!submitted) {
+                            showAppAlertDialog(
+                              context,
+                              message:
+                                  viewModel.errorMessage ??
+                                  '반품 요청을 접수하지 못했습니다.',
+                            );
+                            return;
+                          }
 
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.returnComplete,
-                      (route) => route.settings.name == AppRoutes.home,
-                      arguments: order.orderId,
-                    );
-                  },
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRoutes.returnComplete,
+                            (route) => route.settings.name == AppRoutes.home,
+                            arguments: order.orderId,
+                          );
+                        },
                   icon: const Icon(Icons.assignment_return_outlined),
-                  label: const Text('반품 요청'),
+                  label: Text(viewModel.isSubmitting ? '접수 중' : '반품 요청'),
                 ),
               ),
             ],

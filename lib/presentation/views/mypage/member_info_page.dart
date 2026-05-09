@@ -1,10 +1,40 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../view_models/my_page_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
 
-class MemberInfoPage extends StatelessWidget {
+class MemberInfoPage extends StatefulWidget {
   const MemberInfoPage({super.key});
+
+  @override
+  State<MemberInfoPage> createState() => _MemberInfoPageState();
+}
+
+class _MemberInfoPageState extends State<MemberInfoPage> {
+  late final MyPageViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = MyPageViewModel()..load();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openEditPage() async {
+    final updated = await Navigator.pushNamed(context, AppRoutes.memberEdit);
+    if (!mounted) {
+      return;
+    }
+    if (updated == true) {
+      await _viewModel.load();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,29 +50,47 @@ class MemberInfoPage extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const _PageHeader(),
-                        const SizedBox(height: 16),
-                        const _InfoCard(),
-                        const SizedBox(height: 14),
-                        _AccountNoticeCard(
-                          onEditTap: () => Navigator.pushNamed(
-                            context,
-                            AppRoutes.memberEdit,
-                          ),
+            child: AnimatedBuilder(
+              animation: _viewModel,
+              builder: (context, _) {
+                if (_viewModel.isLoading && _viewModel.profile == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (_viewModel.errorMessage != null &&
+                    _viewModel.profile == null) {
+                  return _ErrorState(
+                    message: _viewModel.errorMessage!,
+                    onRetry: _viewModel.load,
+                  );
+                }
+
+                final profile = _viewModel.profile;
+                return CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const _PageHeader(),
+                            const SizedBox(height: 16),
+                            _InfoCard(
+                              name: profile?.name ?? '',
+                              email: profile?.email ?? '',
+                              phone: profile?.phone ?? '',
+                              emailVerified: profile?.emailVerified ?? false,
+                            ),
+                            const SizedBox(height: 14),
+                            _AccountNoticeCard(onEditTap: _openEditPage),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -72,16 +120,30 @@ class _PageHeader extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard();
+  const _InfoCard({
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.emailVerified,
+  });
+
+  final String name;
+  final String email;
+  final String phone;
+  final bool emailVerified;
 
   @override
   Widget build(BuildContext context) {
-    return const _WhiteCard(
+    return _WhiteCard(
       title: '기본 정보',
       children: [
-        _InfoRow(label: '이름', value: '홍길동'),
-        _InfoRow(label: '이메일', value: 'customer@test.com', verified: true),
-        _InfoRow(label: '휴대폰번호', value: '010-1111-2222'),
+        _InfoRow(label: '이름', value: name.isEmpty ? '미등록' : name),
+        _InfoRow(
+          label: '이메일',
+          value: email.isEmpty ? '미등록' : email,
+          verified: emailVerified,
+        ),
+        _InfoRow(label: '전화번호', value: phone.isEmpty ? '미등록' : phone),
       ],
     );
   }
@@ -122,7 +184,7 @@ class _AccountNoticeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '이름, 연락처, 이메일 변경은 본인 확인과 백엔드 API 연결 후 제공할 예정입니다. 이메일을 변경하더라도 인증은 선택 사항으로 둘 수 있습니다.',
+                    '이름과 전화번호는 수정할 수 있습니다. 이메일 변경은 인증 정책 확인 후 연결 예정입니다.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF5F6C62),
                       height: 1.45,
@@ -245,6 +307,30 @@ class _VerifiedBadge extends StatelessWidget {
             color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w900,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            FilledButton(onPressed: onRetry, child: const Text('다시 시도')),
+          ],
         ),
       ),
     );

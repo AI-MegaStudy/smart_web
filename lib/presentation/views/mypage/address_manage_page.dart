@@ -2,10 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:kpostal_plus/kpostal_plus.dart';
 
 import '../../../app/router.dart';
+import '../../../data/repositories/address_repository.dart';
 import '../../widgets/brand_app_bar_title.dart';
 
-class AddressManagePage extends StatelessWidget {
+class AddressManagePage extends StatefulWidget {
   const AddressManagePage({super.key});
+
+  @override
+  State<AddressManagePage> createState() => _AddressManagePageState();
+}
+
+class _AddressManagePageState extends State<AddressManagePage> {
+  final AddressRepository _repository = AddressRepository();
+  late Future<List<CustomerAddress>> _addressesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _addressesFuture = _repository.fetchAddresses();
+  }
+
+  void _reload() {
+    setState(() {
+      _addressesFuture = _repository.fetchAddresses();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +50,46 @@ class AddressManagePage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            AppRoutes.addressAdd,
-                          ),
-                          child: const Text('배송지 추가하기'),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await Navigator.pushNamed(
+                              context,
+                              AppRoutes.addressAdd,
+                            );
+                            if (mounted) {
+                              _reload();
+                            }
+                          },
+                          icon: const Icon(Icons.add_location_alt_outlined),
+                          label: const Text('배송지 추가하기'),
                         ),
                         const SizedBox(height: 20),
-                        const _AddressItem(),
+                        FutureBuilder<List<CustomerAddress>>(
+                          future: _addressesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState !=
+                                ConnectionState.done) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            final addresses = snapshot.data ?? const [];
+                            if (addresses.isEmpty) {
+                              return const _EmptyAddressPanel();
+                            }
+                            return Column(
+                              children: [
+                                for (final address in addresses) ...[
+                                  _AddressItem(address: address),
+                                  const SizedBox(height: 12),
+                                ],
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -52,7 +104,9 @@ class AddressManagePage extends StatelessWidget {
 }
 
 class _AddressItem extends StatelessWidget {
-  const _AddressItem();
+  const _AddressItem({required this.address});
+
+  final CustomerAddress address;
 
   @override
   Widget build(BuildContext context) {
@@ -71,35 +125,35 @@ class _AddressItem extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               crossAxisAlignment: WrapCrossAlignment.center,
-              children: const [
-                _SmallBadge(label: '내집'),
-                _SmallBadge(label: '기본 배송지'),
-                _SmallBadge(label: '최근 사용'),
+              children: [
+                if (address.label.isNotEmpty) _SmallBadge(label: address.label),
+                if (address.isDefault) const _SmallBadge(label: '기본 배송지'),
+                if (address.isRecent) const _SmallBadge(label: '최근 사용'),
               ],
             ),
             const SizedBox(height: 10),
-            const Text(
-              '홍길동',
+            Text(
+              address.receiverName,
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            const Text(
-              '서울시 강남구 테헤란로 123',
+            Text(
+              address.fullAddress,
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             Text(
-              '010-1111-2222',
+              address.receiverPhone,
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF5F6C62)),
             ),
             const SizedBox(height: 14),
             OutlinedButton(
-              onPressed: () => Navigator.pushNamed(
+              onPressed: () async => Navigator.pushNamed(
                 context,
                 AppRoutes.addressAdd,
-                arguments: 'edit',
+                arguments: address.addressId,
               ),
               child: const Text('수정'),
             ),
@@ -110,17 +164,38 @@ class _AddressItem extends StatelessWidget {
   }
 }
 
-class AddressAddPage extends StatefulWidget {
-  const AddressAddPage({super.key, required this.isEdit});
+class _EmptyAddressPanel extends StatelessWidget {
+  const _EmptyAddressPanel();
 
-  final bool isEdit;
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8F4),
+        border: Border.all(color: const Color(0xFFE0E3DE)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(22),
+        child: Text('저장된 배송지가 없습니다. 배송지를 추가해주세요.'),
+      ),
+    );
+  }
+}
+
+class AddressAddPage extends StatefulWidget {
+  const AddressAddPage({super.key, this.addressId});
+
+  final int? addressId;
 
   @override
   State<AddressAddPage> createState() => _AddressAddPageState();
 }
 
 class _AddressAddPageState extends State<AddressAddPage> {
+  final AddressRepository _repository = AddressRepository();
   bool _setDefault = false;
+  bool _isSaving = false;
   String _requestMemo = '배송 요청사항을 선택해주세요';
 
   late final TextEditingController _nameController;
@@ -132,28 +207,22 @@ class _AddressAddPageState extends State<AddressAddPage> {
   late final TextEditingController _customRequestController;
 
   bool get _isCustomRequest => _requestMemo == '직접 입력';
+  bool get _isEdit => widget.addressId != null;
 
   @override
   void initState() {
     super.initState();
-    _setDefault = widget.isEdit;
-    _nameController = TextEditingController(text: widget.isEdit ? '홍길동' : '');
-    _addressLabelController = TextEditingController(
-      text: widget.isEdit ? '내집' : '',
-    );
-    _phoneController = TextEditingController(
-      text: widget.isEdit ? '010-1111-2222' : '',
-    );
-    _zipCodeController = TextEditingController(
-      text: widget.isEdit ? '06236' : '',
-    );
-    _addressController = TextEditingController(
-      text: widget.isEdit ? '서울시 강남구 테헤란로 123' : '',
-    );
-    _detailAddressController = TextEditingController(
-      text: widget.isEdit ? '101동 1203호' : '',
-    );
+    _setDefault = true;
+    _nameController = TextEditingController();
+    _addressLabelController = TextEditingController();
+    _phoneController = TextEditingController();
+    _zipCodeController = TextEditingController();
+    _addressController = TextEditingController();
+    _detailAddressController = TextEditingController();
     _customRequestController = TextEditingController();
+    if (_isEdit) {
+      _loadAddress();
+    }
   }
 
   @override
@@ -170,8 +239,8 @@ class _AddressAddPageState extends State<AddressAddPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isEdit ? '배송지 수정' : '배송지 추가';
-    final savedMessage = widget.isEdit ? '배송지가 수정되었습니다.' : '배송지가 저장되었습니다.';
+    final title = _isEdit ? '배송지 수정' : '배송지 추가';
+    final savedMessage = _isEdit ? '배송지가 수정되었습니다.' : '배송지가 저장되었습니다.';
 
     return Scaffold(
       appBar: AppBar(
@@ -290,8 +359,10 @@ class _AddressAddPageState extends State<AddressAddPage> {
                         ),
                         const SizedBox(height: 96),
                         FilledButton(
-                          onPressed: () => _saveAddress(savedMessage),
-                          child: const Text('저장하기'),
+                          onPressed: _isSaving
+                              ? null
+                              : () => _saveAddress(savedMessage),
+                          child: Text(_isSaving ? '저장 중' : '저장하기'),
                         ),
                       ],
                     ),
@@ -330,6 +401,38 @@ class _AddressAddPageState extends State<AddressAddPage> {
       _zipCodeController.text = result.postCode;
       _addressController.text = selectedAddress;
     });
+  }
+
+  Future<void> _loadAddress() async {
+    try {
+      final addresses = await _repository.fetchAddresses();
+      if (addresses.isEmpty) {
+        return;
+      }
+      final address = addresses.firstWhere(
+        (item) => item.addressId == widget.addressId,
+        orElse: () => addresses.first,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _nameController.text = address.receiverName;
+        _addressLabelController.text = address.label;
+        _phoneController.text = address.receiverPhone;
+        _zipCodeController.text = address.zipCode;
+        _addressController.text = address.address;
+        _detailAddressController.text = address.detailAddress;
+        _requestMemo = address.deliveryMemo.isEmpty
+            ? '배송 요청사항을 선택해주세요'
+            : address.deliveryMemo;
+        _setDefault = address.isDefault;
+      });
+    } catch (_) {
+      if (mounted) {
+        await _showNotice(context, '배송지 정보를 불러오지 못했습니다.');
+      }
+    }
   }
 
   Future<void> _showNotice(BuildContext context, String message) {
@@ -375,6 +478,35 @@ class _AddressAddPageState extends State<AddressAddPage> {
       return;
     }
 
+    setState(() => _isSaving = true);
+    try {
+      final deliveryMemo = _isCustomRequest
+          ? _customRequestController.text.trim()
+          : _requestMemo == '배송 요청사항을 선택해주세요'
+          ? ''
+          : _requestMemo;
+      await _repository.saveAddress(
+        addressId: widget.addressId,
+        label: _addressLabelController.text,
+        receiverName: _nameController.text,
+        receiverPhone: _phoneController.text,
+        zipCode: _zipCodeController.text,
+        address: _addressController.text,
+        detailAddress: _detailAddressController.text,
+        deliveryMemo: deliveryMemo,
+        isDefault: _setDefault,
+      );
+    } catch (_) {
+      if (mounted) {
+        await _showNotice(context, '배송지를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      }
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+      return;
+    }
+
+    if (!mounted) return;
     await _showNotice(context, savedMessage);
     if (!mounted) return;
     Navigator.pop(context);

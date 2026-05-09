@@ -126,3 +126,20 @@ class AuthService:
             "customer_profile": customer_profile,
             "owner_profile": owner_profile,
         }
+
+    def update_me(self, account_id: int, name: str, phone: str) -> dict:
+        account = self.repo.get_account(account_id)
+        if not account:
+            raise HTTPException(status_code=404, detail="account not found")
+
+        if account.customer_profile:
+            account.customer_profile.customer_name = name
+            account.customer_profile.customer_phone = phone
+        elif account.owner_profile:
+            account.owner_profile.owner_name = name
+            account.owner_profile.owner_phone = phone
+        else:
+            raise HTTPException(status_code=404, detail="profile not found")
+
+        self.session.commit()
+        return self.get_me(account_id)

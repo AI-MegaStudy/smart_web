@@ -15,7 +15,7 @@ class ProductCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 520;
-        final cardPadding = isCompact ? 14.0 : 18.0;
+        final cardPadding = isCompact ? 12.0 : 14.0;
         final chipSpacing = isCompact ? 6.0 : 8.0;
 
         return Card(
@@ -26,7 +26,7 @@ class ProductCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AspectRatio(
-                  aspectRatio: isCompact ? 16 / 8.4 : 16 / 10,
+                  aspectRatio: isCompact ? 16 / 7.8 : 16 / 8.4,
                   child: Image.network(
                     product.imageUrl,
                     fit: BoxFit.cover,
@@ -60,10 +60,10 @@ class ProductCard extends StatelessWidget {
                           if (product.isLowStock)
                             const StatusBadge(label: '잔여 수량 적음', warning: true)
                           else if (!product.isReservable)
-                            const StatusBadge(label: '다음 수확 준비중'),
+                            const _StateLabel(label: '다음 수확 준비중'),
                         ],
                       ),
-                      SizedBox(height: isCompact ? 8 : 10),
+                      SizedBox(height: isCompact ? 7 : 8),
                       Wrap(
                         spacing: chipSpacing,
                         runSpacing: chipSpacing,
@@ -87,7 +87,7 @@ class ProductCard extends StatelessWidget {
                                 ),
                               ],
                       ),
-                      SizedBox(height: isCompact ? 10 : 14),
+                      SizedBox(height: isCompact ? 8 : 10),
                       Text(
                         product.farmName,
                         maxLines: 1,
@@ -96,7 +96,7 @@ class ProductCard extends StatelessWidget {
                           color: const Color(0xFF657166),
                         ),
                       ),
-                      SizedBox(height: isCompact ? 6 : 8),
+                      SizedBox(height: isCompact ? 5 : 6),
                       if (product.isReservable)
                         PriceText(price: product.price)
                       else
@@ -142,6 +142,31 @@ class _MetaChip extends StatelessWidget {
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: const Color(0xFF4B584D),
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _StateLabel extends StatelessWidget {
+  const _StateLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7E0),
+        border: Border.all(color: const Color(0xFFE0B45B)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: const Color(0xFF7A4F00),
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
