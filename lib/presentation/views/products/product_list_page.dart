@@ -326,6 +326,11 @@ class _SummaryPanel extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _SummaryRow(
+              label: '다음 수확 준비중',
+              value: '${viewModel.preparingCount}종',
+            ),
+            const SizedBox(height: 10),
+            _SummaryRow(
               label: '곧 마감될 수 있어요',
               value: '${viewModel.lowStockCount}종',
             ),

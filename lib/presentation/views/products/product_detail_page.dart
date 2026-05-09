@@ -77,7 +77,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               slivers: [
                 SliverToBoxAdapter(
                   child: _ConstrainedContent(
-                    child: _DetailHero(viewModel: _viewModel, product: product),
+                    child: product.isReservable
+                        ? _DetailHero(viewModel: _viewModel, product: product)
+                        : _PreparingDetailHero(product: product),
                   ),
                 ),
               ],
@@ -100,6 +102,109 @@ class _ConstrainedContent extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1180),
         child: child,
+      ),
+    );
+  }
+}
+
+class _PreparingDetailHero extends StatelessWidget {
+  const _PreparingDetailHero({required this.product});
+
+  final ProductModel product;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 900;
+          final image = ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: AspectRatio(
+              aspectRatio: isWide ? 0.95 : 1.7,
+              child: Image.network(
+                product.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: const Color(0xFFE3E9DF),
+                    child: const Center(
+                      child: Icon(Icons.image_not_supported_outlined, size: 48),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+
+          final info = DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFDCE3DD)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const StatusBadge(label: '다음 수확 준비중'),
+                  const SizedBox(height: 14),
+                  Text(
+                    '${product.variety} 사과',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF163B2B),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${product.farmName} · 사과 · ${product.variety} 품종',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFF5F6C62),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const NoticeBox(
+                    message: '농가가 다음 수확 일정과 예약 가능 수량을 확정하면 이 상품을 예약할 수 있습니다.',
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    '현재는 예약함에 담을 수 없어요. 예약 가능한 다른 수확 상품을 먼저 확인해보세요.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.5,
+                      color: const Color(0xFF5F6C62),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRoutes.products),
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('다른 예약 상품 보기'),
+                  ),
+                ],
+              ),
+            ),
+          );
+
+          if (!isWide) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [image, const SizedBox(height: 18), info],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 95, child: image),
+              const SizedBox(width: 20),
+              Expanded(flex: 105, child: info),
+            ],
+          );
+        },
       ),
     );
   }
@@ -230,8 +335,7 @@ class _DetailHero extends StatelessWidget {
                       if (!MockAuthSession.isLoggedIn) {
                         await showAppAlertDialog(
                           context,
-                          message:
-                              '예약은 로그인 후 진행할 수 있습니다. 로그인 화면으로 이동합니다.',
+                          message: '예약은 로그인 후 진행할 수 있습니다. 로그인 화면으로 이동합니다.',
                         );
                         if (!context.mounted) return;
                         Navigator.pushNamed(context, AppRoutes.login);

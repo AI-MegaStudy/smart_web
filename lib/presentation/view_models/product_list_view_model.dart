@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/product_model.dart';
-import '../../data/repositories/product_repository.dart';
+import '../../data/repositories/product_api_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 
 class ProductListViewModel extends ChangeNotifier {
   ProductListViewModel({ProductRepositoryContract? productRepository})
-    : _productRepository = productRepository ?? ProductRepository();
+    : _productRepository = productRepository ?? ProductApiRepository();
 
   final ProductRepositoryContract _productRepository;
 
@@ -36,7 +36,10 @@ class ProductListViewModel extends ChangeNotifier {
         .toList(growable: false);
   }
 
-  int get openSlotCount => _products.length;
+  int get openSlotCount =>
+      _products.where((product) => product.isReservable).length;
+  int get preparingCount =>
+      _products.where((product) => !product.isReservable).length;
   int get lowStockCount =>
       _products.where((product) => product.isLowStock).length;
 

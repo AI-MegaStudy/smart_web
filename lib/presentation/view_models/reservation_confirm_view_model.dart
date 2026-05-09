@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../data/models/harvest_slot_model.dart';
 import '../../data/models/local_basket_item_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
-import '../../data/repositories/product_repository.dart';
+import '../../data/repositories/product_api_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 
 class ReservationConfirmViewModel extends ChangeNotifier {
@@ -12,7 +12,7 @@ class ReservationConfirmViewModel extends ChangeNotifier {
     ProductRepositoryContract? productRepository,
   }) : _localBasketRepository =
            localBasketRepository ?? LocalBasketRepository(),
-       _productRepository = productRepository ?? ProductRepository();
+       _productRepository = productRepository ?? ProductApiRepository();
 
   final LocalBasketRepositoryContract _localBasketRepository;
   final ProductRepositoryContract _productRepository;

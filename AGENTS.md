@@ -61,6 +61,80 @@ lib/
     widgets/
 ```
 
+## 5.1 SMART_WEB 내부 백엔드 연동 규칙
+
+2026-05-09 기준 `SMART_WEB` 저장소 안에 백엔드 코드가 포함되어 있다.
+
+백엔드 위치:
+
+```text
+C:\Users\User_KO\Documents\GitHub\smart_web\backend
+```
+
+이 백엔드는 FastAPI 기반이며, 사용자 웹과 연결할 때 아래 기준을 따른다.
+
+- FastAPI 앱 진입점은 `backend.app.main:app`이다.
+- API Base URL은 `/api/v1`이다.
+- 로컬 개발 기본 주소는 `http://localhost:8000/api/v1`로 본다.
+- Swagger 확인 주소는 `http://localhost:8000/docs`이다.
+- DB 연결은 `backend/app/core/config.py` 기준 MySQL 계열이다.
+- DB URL은 `mysql+pymysql://<user>:<password>@<host>:3306/harvest_slot_db?charset=utf8mb4` 형태로 조합된다.
+- 로컬 MySQL, 팀 공용 MySQL, AWS RDS MySQL 모두 환경변수 설정으로 연결 가능하다.
+
+백엔드 코드는 사용자 요청이 명확히 있을 때만 수정한다. 사용자 웹 담당 작업에서는 기본적으로 백엔드 코드를 직접 고치지 않고, `SMART_WEB/lib`의 Repository와 ViewModel을 백엔드 API에 맞춰 연결한다.
+
+프론트 연결 시 반드시 지킬 기준:
+
+- View에서 FastAPI를 직접 호출하지 않는다.
+- API 호출은 Repository에서 처리한다.
+- ViewModel은 Repository를 통해 데이터를 가져오고 화면 상태만 관리한다.
+- 백엔드 응답은 `{ data, message, error }` 구조이므로 Repository에서 `data`를 꺼내 화면 모델로 변환한다.
+- 인증이 필요한 API는 `Authorization: Bearer <access_token>` 헤더를 사용한다.
+- 백엔드 상태 코드는 사용자 화면에서 한글 표시로 변환한다.
+- 고객 화면에 API 경로, DB 필드명, 내부 상태 코드를 직접 노출하지 않는다.
+
+현재 사용자 웹과 바로 연결 가능한 주요 API:
+
+- `POST /auth/customers/signup`
+- `POST /auth/email/send`
+- `POST /auth/email/resend`
+- `POST /auth/email/verify`
+- `GET /auth/email/status`
+- `POST /auth/login`
+- `GET /me`
+- `GET /products?featured=true`
+- `GET /products`
+- `GET /products/{product_id}`
+- `GET /products/{product_id}/slots`
+- `POST /reservations/preview`
+- `POST /reservations`
+- `GET /me/reservations`
+- `POST /orders/from-reservation`
+- `POST /payments/mock-approve`
+- `GET /me/orders`
+- `GET /me/orders/{order_id}`
+- `GET /me/orders/{order_id}/payments`
+- `GET /me/orders/{order_id}/shipment`
+- `POST /returns`
+- `GET /me/returns`
+
+아직 백엔드 협의가 필요한 부분:
+
+- 여러 배송지 관리 API: 관련 필드는 있으나 API가 없으므로 프론트 담당자가 백엔드에 직접 추가한다.
+- 회원정보 수정 API: `PUT /me`
+- 일부 백엔드 문서와 스키마 예시의 한글 깨짐 정리
+
+팀장 컨펌 반영 결정사항:
+
+- 배송지 관리는 `CustomerProfile`의 기본 배송지 필드만으로는 부족하므로 `GET/POST/PUT/DELETE /me/addresses`, `PATCH /me/addresses/{address_id}/default` 계열 API를 직접 추가해서 연결한다.
+- 고객센터와 푸터 정보는 DB에 없으므로 `GET /service-info` 같은 API를 만들지 않고 프론트 더미 데이터로 유지한다.
+- 푸터 전화번호, 이메일, 운영 시간은 사용자 웹 화면에서 정적 데이터로 관리한다.
+
+관련 정리 문서:
+
+- `docs/ksm/백엔드_내장구조_연동정리_2026-05-09.md`
+- `docs/ksm/백엔드_SMART_WEB_연결검토_2026-05-08.md`
+
 규칙:
 
 - View는 화면 표시와 사용자 입력 전달만 담당한다.

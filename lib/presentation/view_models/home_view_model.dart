@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 
 import '../../data/models/product_model.dart';
-import '../../data/repositories/product_repository.dart';
+import '../../data/repositories/product_api_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 
 class HomeViewModel extends ChangeNotifier {
   HomeViewModel({ProductRepositoryContract? productRepository})
-    : _productRepository = productRepository ?? ProductRepository();
+    : _productRepository = productRepository ?? ProductApiRepository();
 
   final ProductRepositoryContract _productRepository;
 

@@ -1,7 +1,12 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+PROJECT_DIR = BACKEND_DIR.parent
 
 
 class Settings(BaseSettings):
@@ -42,7 +47,7 @@ class Settings(BaseSettings):
     dl_quality_timeout_seconds: int = 20
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(PROJECT_DIR / ".env", BACKEND_DIR / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
     )

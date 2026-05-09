@@ -10,6 +10,7 @@ class ProductModel {
     required this.harvestEndLabel,
     required this.availableKg,
     required this.imageUrl,
+    this.openSlotCount = 0,
   });
 
   final int productId;
@@ -22,7 +23,9 @@ class ProductModel {
   final String harvestEndLabel;
   final double availableKg;
   final String imageUrl;
+  final int openSlotCount;
 
   int get availablePackageCount => availableKg ~/ packageUnitKg;
-  bool get isLowStock => availablePackageCount <= 5;
+  bool get isReservable => openSlotCount > 0 && availableKg > 0 && price > 0;
+  bool get isLowStock => isReservable && availablePackageCount <= 5;
 }

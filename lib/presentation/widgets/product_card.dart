@@ -58,24 +58,34 @@ class ProductCard extends StatelessWidget {
                             ),
                           ),
                           if (product.isLowStock)
-                            const StatusBadge(label: '잔여 수량 적음', warning: true),
+                            const StatusBadge(label: '잔여 수량 적음', warning: true)
+                          else if (!product.isReservable)
+                            const StatusBadge(label: '다음 수확 준비중'),
                         ],
                       ),
                       SizedBox(height: isCompact ? 8 : 10),
                       Wrap(
                         spacing: chipSpacing,
                         runSpacing: chipSpacing,
-                        children: [
-                          StatusBadge(
-                            label:
-                                '${product.harvestStartLabel}-${product.harvestEndLabel} 수확 예정',
-                          ),
-                          _MetaChip(
-                            label:
-                                '잔여 ${product.availableKg.toStringAsFixed(product.availableKg % 1 == 0 ? 0 : 1)}kg',
-                            compact: isCompact,
-                          ),
-                        ],
+                        children: product.isReservable
+                            ? [
+                                StatusBadge(
+                                  label:
+                                      '${product.harvestStartLabel}-${product.harvestEndLabel} 수확 예정',
+                                ),
+                                _MetaChip(
+                                  label:
+                                      '잔여 ${product.availableKg.toStringAsFixed(product.availableKg % 1 == 0 ? 0 : 1)}kg',
+                                  compact: isCompact,
+                                ),
+                              ]
+                            : [
+                                const StatusBadge(label: '수확 일정 준비중'),
+                                _MetaChip(
+                                  label: '확정 후 예약 가능',
+                                  compact: isCompact,
+                                ),
+                              ],
                       ),
                       SizedBox(height: isCompact ? 10 : 14),
                       Text(
@@ -87,7 +97,17 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: isCompact ? 6 : 8),
-                      PriceText(price: product.price),
+                      if (product.isReservable)
+                        PriceText(price: product.price)
+                      else
+                        Text(
+                          '수확 일정 확정 후 안내',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFF2F6B4E),
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
                     ],
                   ),
                 ),

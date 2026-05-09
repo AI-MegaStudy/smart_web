@@ -4,7 +4,7 @@ import '../../data/models/harvest_slot_model.dart';
 import '../../data/models/local_basket_item_model.dart';
 import '../../data/models/product_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
-import '../../data/repositories/product_repository.dart';
+import '../../data/repositories/product_api_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 
 class ProductDetailViewModel extends ChangeNotifier {
@@ -13,7 +13,7 @@ class ProductDetailViewModel extends ChangeNotifier {
     ProductRepositoryContract? productRepository,
     LocalBasketRepositoryContract? localBasketRepository,
   }) : _productId = productId,
-       _productRepository = productRepository ?? ProductRepository(),
+       _productRepository = productRepository ?? ProductApiRepository(),
        _localBasketRepository =
            localBasketRepository ?? LocalBasketRepository();
 
@@ -34,6 +34,7 @@ class ProductDetailViewModel extends ChangeNotifier {
   HarvestSlotModel? get selectedSlot => _selectedSlot;
   int get packageCount => _packageCount;
   double get selectedPackageUnitKg => _selectedPackageUnitKg;
+  bool get canReserve => _product?.isReservable == true && _slots.isNotEmpty;
 
   double get reservedKg {
     final product = _product;
