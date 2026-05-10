@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +55,11 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        # Use SQLite for development if MySQL is not available
+        if self.database_host == "localhost" and not self.database_password:
+            sqlite_dir = Path(os.environ.get("LOCALAPPDATA", PROJECT_DIR)) / "smart_web"
+            sqlite_dir.mkdir(parents=True, exist_ok=True)
+            return f"sqlite:///{sqlite_dir / 'harvest_slot_dev.db'}"
         return (
             f"mysql+pymysql://{self.database_user}:{self.database_password}"
             f"@{self.database_host}:{self.database_port}/{self.database_name}"
