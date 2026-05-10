@@ -631,7 +631,7 @@ class _HeroSection extends StatelessWidget {
                           ),
                           SizedBox(height: 5),
                           Text(
-                            '충주 햇살농원 양광 사과 수확 예정',
+                            '문경 햇살 농장 신고 사과 수확 예정',
                             style: TextStyle(
                               color: Color(0xCCFFFFFF),
                               fontSize: 12,
@@ -740,7 +740,7 @@ class _HeroImageSliderState extends State<_HeroImageSlider> {
       title: '수확일이 확정된 사과만 예약하세요',
       description: '농가가 확정한 수확 예정 범위와 잔여 수량을 확인합니다.',
       badgeTitle: '10.12-10.18',
-      badgeDescription: '충주 햇살농원 양광 사과 수확 예정',
+      badgeDescription: '문경 햇살 농장 신고 사과 수확 예정',
     ),
     _HeroSlide(
       imageUrl:
@@ -1437,9 +1437,9 @@ class _VarietySection extends StatelessWidget {
   Widget build(BuildContext context) {
     const varieties = [
       _VarietyInfo(
-        name: '양광',
-        tag: '향긋하고 산뜻한 단맛',
-        description: '향이 은은하고 단맛과 산미가 조화로워 수확 직후 신선하게 즐기기 좋습니다.',
+        name: '신고',
+        tag: '깔끔한 단맛과 단단한 과육',
+        description: '과육이 단단하고 단맛이 깔끔해 선물용이나 가정용으로 두루 즐기기 좋습니다.',
         color: Color(0xFFE6483D),
       ),
       _VarietyInfo(
@@ -2406,11 +2406,11 @@ class _CleanSupportFooter extends StatelessWidget {
                 children: [
                   _FooterLink(
                     label: '이용약관',
-                    message: '이용약관은 현재 고객센터로 문의해 확인할 수 있습니다.',
+                    document: _PolicyDocument.terms,
                   ),
                   _FooterLink(
                     label: '개인정보처리방침',
-                    message: '개인정보처리방침은 현재 고객센터로 문의해 확인할 수 있습니다.',
+                    document: _PolicyDocument.privacy,
                   ),
                   const _FooterLink(
                     label: '이메일 문의',
@@ -2443,6 +2443,8 @@ class _CleanSupportFooter extends StatelessWidget {
 }
 
 enum _SupportAction { phone, email }
+
+enum _PolicyDocument { terms, privacy }
 
 Future<void> _openSupportAction(
   BuildContext context,
@@ -2601,11 +2603,17 @@ class _CleanSupportCard extends StatelessWidget {
 }
 
 class _FooterLink extends StatelessWidget {
-  const _FooterLink({required this.label, this.message, this.supportAction});
+  const _FooterLink({
+    required this.label,
+    this.message,
+    this.supportAction,
+    this.document,
+  });
 
   final String label;
   final String? message;
   final _SupportAction? supportAction;
+  final _PolicyDocument? document;
 
   @override
   Widget build(BuildContext context) {
@@ -2615,6 +2623,12 @@ class _FooterLink extends StatelessWidget {
         final action = supportAction;
         if (action != null) {
           _openSupportAction(context, action);
+          return;
+        }
+
+        final policyDocument = document;
+        if (policyDocument != null) {
+          _showPolicyDialog(context, policyDocument);
           return;
         }
 
@@ -2632,6 +2646,84 @@ class _FooterLink extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _showPolicyDialog(
+  BuildContext context,
+  _PolicyDocument document,
+) {
+  final content = _policyContent(document);
+  return showDialog<void>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(content.title),
+        content: SizedBox(
+          width: 560,
+          child: SingleChildScrollView(
+            child: Text(
+              content.body,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                height: 1.65,
+                color: const Color(0xFF2D3A31),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+({String title, String body}) _policyContent(_PolicyDocument document) {
+  return switch (document) {
+    _PolicyDocument.terms => (
+      title: '이용약관',
+      body:
+          '제1조 목적\n'
+          '이 약관은 Harvest Slot이 제공하는 수확 슬롯 기반 농산물 예약 서비스의 이용 조건과 절차, 회원과 서비스의 권리 및 의무를 정합니다.\n\n'
+          '제2조 서비스 내용\n'
+          'Harvest Slot은 고객이 농가가 등록한 상품과 수확 예정 슬롯을 확인하고, 예약, 주문, 결제, 배송 조회, 반품 요청을 진행할 수 있도록 돕는 온라인 예약 서비스를 제공합니다.\n\n'
+          '제3조 회원 이용\n'
+          '회원은 정확한 정보를 입력해야 하며, 다른 사람의 정보를 사용하거나 서비스 운영을 방해해서는 안 됩니다. 회원 정보가 변경된 경우 서비스 화면 또는 고객센터를 통해 최신 정보로 유지해야 합니다.\n\n'
+          '제4조 예약과 주문\n'
+          '수확 예정일과 잔여 수량은 농가의 확인, 기상, 생육 상황에 따라 조정될 수 있습니다. 고객은 주문 전 상품명, 수량, 금액, 배송지 정보를 확인한 뒤 결제를 진행해야 합니다.\n\n'
+          '제5조 결제와 취소\n'
+          '결제가 완료된 주문은 농가 확인 및 배송 준비 단계로 진행됩니다. 취소 가능 여부와 환불 기준은 주문 상태, 상품 준비 여부, 배송 진행 여부에 따라 달라질 수 있습니다.\n\n'
+          '제6조 배송과 반품\n'
+          '배송 완료 후 상품 파손, 변질, 오배송 등 문제가 있는 경우 고객은 증빙 사진과 상세 사유를 첨부해 반품을 요청할 수 있습니다. 환불 가능 금액은 접수 내용과 상품 상태 확인 결과에 따라 안내됩니다.\n\n'
+          '제7조 서비스 변경\n'
+          '서비스는 운영상 필요에 따라 화면, 기능, 제공 범위가 변경될 수 있습니다. 중요한 변경 사항은 서비스 화면 또는 별도 안내를 통해 고지합니다.\n\n'
+          '제8조 문의\n'
+          '서비스 이용 중 문의가 필요한 경우 고객센터 또는 이메일 support@harvestslot.kr로 연락할 수 있습니다.\n\n'
+          '시행일: 2026년 5월 11일',
+    ),
+    _PolicyDocument.privacy => (
+      title: '개인정보처리방침',
+      body:
+          '1. 수집하는 개인정보\n'
+          'Harvest Slot은 회원가입, 주문, 배송, 고객 응대를 위해 이름, 이메일, 휴대폰번호, 배송지, 주문 및 결제 내역, 반품 요청 내용을 수집할 수 있습니다.\n\n'
+          '2. 개인정보 이용 목적\n'
+          '수집한 정보는 회원 식별, 이메일 인증, 예약 및 주문 처리, 결제 확인, 배송 안내, 반품 및 환불 처리, 고객 문의 응대, 서비스 품질 개선에 사용됩니다.\n\n'
+          '3. 보관 및 이용 기간\n'
+          '개인정보는 서비스 이용 기간 동안 보관하며, 회원 탈퇴 또는 처리 목적 달성 시 지체 없이 파기합니다. 다만 관련 법령에 따라 보관이 필요한 주문, 결제, 소비자 분쟁 관련 기록은 정해진 기간 동안 보관할 수 있습니다.\n\n'
+          '4. 제3자 제공\n'
+          'Harvest Slot은 원칙적으로 고객의 개인정보를 외부에 제공하지 않습니다. 단, 배송 처리, 결제 확인, 법령상 의무 이행 등 서비스 제공에 필요한 범위에서는 최소한의 정보가 처리될 수 있습니다.\n\n'
+          '5. 개인정보 보호 조치\n'
+          '서비스는 개인정보가 분실, 도난, 유출, 변조되지 않도록 접근 권한 관리와 안전한 저장 및 전송 절차를 적용합니다.\n\n'
+          '6. 이용자의 권리\n'
+          '고객은 본인의 개인정보 열람, 수정, 삭제, 처리 정지를 요청할 수 있습니다. 서비스 화면에서 직접 수정할 수 없는 정보는 고객센터를 통해 요청할 수 있습니다.\n\n'
+          '7. 문의처\n'
+          '개인정보 관련 문의는 support@harvestslot.kr로 접수할 수 있습니다.\n\n'
+          '시행일: 2026년 5월 11일',
+    ),
+  };
 }
 
 // ignore: unused_element

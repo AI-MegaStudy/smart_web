@@ -13,6 +13,7 @@ class OrderStatusMapper {
   static const delivered = 'DELIVERED';
   static const returnRequested = 'RETURN_REQUESTED';
   static const refunded = 'REFUNDED';
+  static const canceled = 'CANCELED';
 
   static const shipmentReady = 'READY';
 
@@ -33,6 +34,7 @@ class OrderStatusMapper {
     delivered: '배송 완료',
     returnRequested: '반품 요청 접수',
     refunded: '환불 완료',
+    canceled: '주문 취소',
   };
 
   static const shipmentLabels = {

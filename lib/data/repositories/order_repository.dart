@@ -151,7 +151,7 @@ class OrderRepository implements OrderRepositoryContract {
       return '부사 사과';
     }
     if (displayName == '예약 배') {
-      return '신고 배';
+      return '신고 사과';
     }
     if (displayName.startsWith('예약 ')) {
       return displayName.replaceFirst('예약 ', '');

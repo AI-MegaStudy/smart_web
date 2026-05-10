@@ -29,9 +29,9 @@ class ProductRepository implements ProductRepositoryContract {
 const _products = [
   ProductModel(
     productId: 3,
-    name: '양광 사과',
-    farmName: '충주 햇살농원',
-    variety: '양광',
+    name: '신고 사과',
+    farmName: '문경 햇살 농장',
+    variety: '신고',
     packageUnitKg: 5,
     price: 39000,
     harvestStartLabel: '10.12',
@@ -43,7 +43,7 @@ const _products = [
   ProductModel(
     productId: 4,
     name: '부사 사과',
-    farmName: '문경 바람농장',
+    farmName: '문경 햇살 농장',
     variety: '부사',
     packageUnitKg: 3,
     price: 32000,
@@ -55,9 +55,9 @@ const _products = [
   ),
   ProductModel(
     productId: 5,
-    name: '양광 사과',
-    farmName: '영주 별빛과수원',
-    variety: '양광',
+    name: '신고 사과',
+    farmName: '문경 햇살 농장',
+    variety: '신고',
     packageUnitKg: 7.5,
     price: 68000,
     harvestStartLabel: '09.28',
@@ -69,7 +69,7 @@ const _products = [
   ProductModel(
     productId: 6,
     name: '부사 사과',
-    farmName: '충주 온빛농장',
+    farmName: '문경 햇살 농장',
     variety: '부사',
     packageUnitKg: 5,
     price: 56000,

@@ -75,6 +75,8 @@ class _MyPageState extends State<MyPage> {
                           email: profile?.email ?? '',
                           defaultShippingAddress:
                               profile?.defaultShippingAddress,
+                          activeOrderSummary: _viewModel.activeOrderSummary,
+                          recentOrderStatus: _viewModel.recentOrderStatus,
                           onRecentOrderTap: () =>
                               Navigator.pushNamed(context, AppRoutes.myOrders),
                         ),
@@ -150,12 +152,16 @@ class _SummaryCard extends StatelessWidget {
     required this.name,
     required this.email,
     required this.defaultShippingAddress,
+    required this.activeOrderSummary,
+    required this.recentOrderStatus,
     required this.onRecentOrderTap,
   });
 
   final String name;
   final String email;
   final String? defaultShippingAddress;
+  final String activeOrderSummary;
+  final String recentOrderStatus;
   final VoidCallback onRecentOrderTap;
 
   @override
@@ -182,17 +188,33 @@ class _SummaryCard extends StatelessWidget {
               email: email,
               onRecentOrderTap: onRecentOrderTap,
             );
-            final stats = Wrap(
-              spacing: 10,
-              runSpacing: 10,
+            final stats = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _SummaryMetric(label: '진행 중 주문', value: '확인 예정'),
-                const _SummaryMetric(label: '최근 주문 상태', value: '내역 확인'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SummaryMetric(
+                        label: '진행 중 주문',
+                        value: activeOrderSummary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _SummaryMetric(
+                        label: '최근 주문 상태',
+                        value: recentOrderStatus,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
                 _SummaryMetric(
                   label: '기본 배송지',
                   value: defaultShippingAddress?.isNotEmpty == true
                       ? defaultShippingAddress!
                       : '미등록',
+                  wide: true,
                 ),
               ],
             );
@@ -207,9 +229,9 @@ class _SummaryCard extends StatelessWidget {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(flex: 5, child: account),
+                Expanded(flex: 4, child: account),
                 const SizedBox(width: 18),
-                Expanded(flex: 4, child: stats),
+                Expanded(flex: 5, child: stats),
               ],
             );
           },
@@ -282,15 +304,20 @@ class _AccountSummary extends StatelessWidget {
 }
 
 class _SummaryMetric extends StatelessWidget {
-  const _SummaryMetric({required this.label, required this.value});
+  const _SummaryMetric({
+    required this.label,
+    required this.value,
+    this.wide = false,
+  });
 
   final String label;
   final String value;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
+      width: wide ? double.infinity : null,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0x1AFFFFFF),
@@ -310,7 +337,7 @@ class _SummaryMetric extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            maxLines: 2,
+            maxLines: wide ? 3 : 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Colors.white,

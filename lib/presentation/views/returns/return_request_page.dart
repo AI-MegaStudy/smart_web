@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/image_file_picker.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../view_models/return_request_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
@@ -252,7 +253,7 @@ class _ReturnForm extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          const _UploadBox(),
+          _UploadBox(viewModel: viewModel),
           const SizedBox(height: 22),
           const Divider(height: 1),
           const SizedBox(height: 18),
@@ -270,11 +271,38 @@ class _ReturnForm extends StatelessWidget {
             children: [
               _AmountOption(
                 label: '전체 ${formatPrice(order?.totalAmount ?? 0)}',
-                selected: true,
+                selected: !viewModel.isCustomAmount,
+                onTap: viewModel.selectFullAmount,
               ),
-              const _AmountOption(label: '확인 후 결정'),
+              _AmountOption(
+                label: '직접 입력',
+                selected: viewModel.isCustomAmount,
+                onTap: viewModel.selectCustomAmount,
+              ),
             ],
           ),
+          if (viewModel.isCustomAmount) ...[
+            const SizedBox(height: 12),
+            TextFormField(
+              initialValue: viewModel.requestAmount == 0
+                  ? ''
+                  : viewModel.requestAmount.toString(),
+              keyboardType: TextInputType.number,
+              onChanged: viewModel.updateCustomRequestAmount,
+              decoration: InputDecoration(
+                labelText: '요청 금액',
+                hintText: '환불 요청 금액을 입력해주세요.',
+                suffixText: '원',
+                helperText:
+                    '최대 ${formatPrice(viewModel.maxRequestAmount)}까지 선택할 수 있습니다.',
+                filled: true,
+                fillColor: const Color(0xFFF9FAF6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -482,7 +510,26 @@ class _ReasonChoiceCard extends StatelessWidget {
 }
 
 class _UploadBox extends StatelessWidget {
-  const _UploadBox();
+  const _UploadBox({required this.viewModel});
+
+  final ReturnRequestViewModel viewModel;
+
+  Future<void> _pickImage() async {
+    final images = await pickImageFiles();
+    if (images.isEmpty) {
+      return;
+    }
+    viewModel.attachEvidenceImages(
+      images
+          .map(
+            (image) => (
+              fileName: image.fileName,
+              previewUrl: image.previewUrl,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -495,18 +542,7 @@ class _UploadBox extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE2EFE4),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.add_photo_alternate_outlined,
-              color: Color(0xFF0F6A3E),
-            ),
-          ),
+          _EvidencePreview(images: viewModel.evidenceImages),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -520,9 +556,14 @@ class _UploadBox extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '상품 상태를 확인할 수 있는 사진을 첨부해주세요.',
+                  viewModel.hasEvidenceImage
+                      ? '${viewModel.evidenceImageCount}장의 사진을 선택했습니다.'
+                      : '상품 상태를 확인할 수 있는 사진을 여러 장 첨부해주세요.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF657166),
+                    fontWeight: viewModel.hasEvidenceImage
+                        ? FontWeight.w800
+                        : FontWeight.w400,
                   ),
                 ),
               ],
@@ -530,9 +571,11 @@ class _UploadBox extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              _pickImage();
+            },
             icon: const Icon(Icons.upload_file),
-            label: const Text('사진 첨부'),
+            label: Text(viewModel.hasEvidenceImage ? '다시 선택' : '사진 첨부'),
           ),
         ],
       ),
@@ -540,29 +583,104 @@ class _UploadBox extends StatelessWidget {
   }
 }
 
+class _EvidencePreview extends StatelessWidget {
+  const _EvidencePreview({required this.images});
+
+  final List<ReturnEvidenceImage> images;
+
+  @override
+  Widget build(BuildContext context) {
+    if (images.isEmpty) {
+      return Container(
+        width: 42,
+        height: 42,
+        decoration: const BoxDecoration(
+          color: Color(0xFFE2EFE4),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.add_photo_alternate_outlined,
+          color: Color(0xFF0F6A3E),
+        ),
+      );
+    }
+
+    final visibleImages = images.take(3).toList(growable: false);
+    return SizedBox(
+      width: 72,
+      height: 54,
+      child: Stack(
+        children: [
+          for (var index = 0; index < visibleImages.length; index += 1)
+            Positioned(
+              left: index * 9,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  visibleImages[index].previewUrl,
+                  width: 54,
+                  height: 54,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          if (images.length > 3)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xCC163B2B),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '+${images.length - 3}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AmountOption extends StatelessWidget {
-  const _AmountOption({required this.label, this.selected = false});
+  const _AmountOption({
+    required this.label,
+    required this.onTap,
+    this.selected = false,
+  });
 
   final String label;
+  final VoidCallback onTap;
   final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFF22764D) : Colors.white,
-        border: Border.all(
-          color: selected ? const Color(0xFF22764D) : const Color(0xFFD4DCD2),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF22764D) : Colors.white,
+          border: Border.all(
+            color: selected ? const Color(0xFF22764D) : const Color(0xFFD4DCD2),
+          ),
+          borderRadius: BorderRadius.circular(999),
         ),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: selected ? Colors.white : const Color(0xFF29362D),
-            fontWeight: FontWeight.w800,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: selected ? Colors.white : const Color(0xFF29362D),
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ),
@@ -602,7 +720,10 @@ class _ReturnSummary extends StatelessWidget {
             value: formatPrice(viewModel.requestAmount),
           ),
           const SizedBox(height: 12),
-          const _SummaryRow(label: '증빙 이미지', value: '선택 전'),
+          _SummaryRow(
+            label: '증빙 이미지',
+            value: viewModel.evidenceSummaryLabel,
+          ),
           const SizedBox(height: 18),
           _SummaryCard(detail: viewModel.reasonDetail),
           const SizedBox(height: 16),
@@ -626,6 +747,13 @@ class _ReturnSummary extends StatelessWidget {
                             showAppAlertDialog(
                               context,
                               message: '반품 상세 사유를 10자 이상 입력해주세요.',
+                            );
+                            return;
+                          }
+                          if (viewModel.requestAmount <= 0) {
+                            showAppAlertDialog(
+                              context,
+                              message: '요청 금액을 선택해주세요.',
                             );
                             return;
                           }
@@ -759,11 +887,16 @@ class _SummaryRow extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF657166)),
           ),
         ),
-        Text(
-          value,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+        Flexible(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
         ),
       ],
     );

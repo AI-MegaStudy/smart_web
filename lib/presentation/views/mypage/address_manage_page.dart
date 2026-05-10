@@ -81,6 +81,7 @@ class _AddressManagePageState extends State<AddressManagePage> {
                               return const _EmptyAddressPanel();
                             }
                             return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 for (final address in addresses) ...[
                                   _AddressItem(address: address),
@@ -110,54 +111,66 @@ class _AddressItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE0E3DE)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (address.label.isNotEmpty) _SmallBadge(label: address.label),
-                if (address.isDefault) const _SmallBadge(label: '기본 배송지'),
-                if (address.isRecent) const _SmallBadge(label: '최근 사용'),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              address.receiverName,
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              address.fullAddress,
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              address.receiverPhone,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF5F6C62)),
-            ),
-            const SizedBox(height: 14),
-            OutlinedButton(
-              onPressed: () async => Navigator.pushNamed(
-                context,
-                AppRoutes.addressAdd,
-                arguments: address.addressId,
+    final label = address.label.trim();
+    final showLabel = label.isNotEmpty && label != '기본 배송지';
+
+    return SizedBox(
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE0E3DE)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (address.isDefault) const _SmallBadge(label: '기본 배송지'),
+                  if (showLabel) _SmallBadge(label: label),
+                  if (address.isRecent) const _SmallBadge(label: '최근 사용'),
+                ],
               ),
-              child: const Text('수정'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                address.receiverName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                address.fullAddress,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                address.receiverPhone,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF5F6C62),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () async => Navigator.pushNamed(
+                    context,
+                    AppRoutes.addressAdd,
+                    arguments: address.addressId,
+                  ),
+                  child: const Text('수정'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -193,10 +206,13 @@ class AddressAddPage extends StatefulWidget {
 }
 
 class _AddressAddPageState extends State<AddressAddPage> {
+  static const String _memoPlaceholder = '배송 요청사항을 선택해주세요';
+  static const String _customMemo = '직접 입력';
+
   final AddressRepository _repository = AddressRepository();
   bool _setDefault = false;
   bool _isSaving = false;
-  String _requestMemo = '배송 요청사항을 선택해주세요';
+  String _requestMemo = _memoPlaceholder;
 
   late final TextEditingController _nameController;
   late final TextEditingController _addressLabelController;
@@ -206,7 +222,7 @@ class _AddressAddPageState extends State<AddressAddPage> {
   late final TextEditingController _detailAddressController;
   late final TextEditingController _customRequestController;
 
-  bool get _isCustomRequest => _requestMemo == '직접 입력';
+  bool get _isCustomRequest => _requestMemo == _customMemo;
   bool get _isEdit => widget.addressId != null;
 
   @override
@@ -271,13 +287,13 @@ class _AddressAddPageState extends State<AddressAddPage> {
                         const _FieldLabel('배송지 별명 (선택)'),
                         _TextInput(
                           controller: _addressLabelController,
-                          hintText: '예: 내집, 부모님댁, 회사',
+                          hintText: '예: 우리집, 부모님댁, 회사',
                         ),
                         const SizedBox(height: 18),
-                        const _FieldLabel('휴대폰번호'),
+                        const _FieldLabel('휴대폰 번호'),
                         _TextInput(
                           controller: _phoneController,
-                          hintText: '휴대폰번호를 입력해주세요',
+                          hintText: '휴대폰 번호를 입력해주세요',
                         ),
                         const SizedBox(height: 18),
                         const _FieldLabel('주소'),
@@ -315,8 +331,8 @@ class _AddressAddPageState extends State<AddressAddPage> {
                           ),
                           items: const [
                             DropdownMenuItem(
-                              value: '배송 요청사항을 선택해주세요',
-                              child: Text('배송 요청사항을 선택해주세요'),
+                              value: _memoPlaceholder,
+                              child: Text(_memoPlaceholder),
                             ),
                             DropdownMenuItem(
                               value: '문 앞에 놓아주세요',
@@ -331,8 +347,8 @@ class _AddressAddPageState extends State<AddressAddPage> {
                               child: Text('부재 시 경비실에 맡겨주세요'),
                             ),
                             DropdownMenuItem(
-                              value: '직접 입력',
-                              child: Text('직접 입력'),
+                              value: _customMemo,
+                              child: Text(_customMemo),
                             ),
                           ],
                           onChanged: (value) {
@@ -424,7 +440,7 @@ class _AddressAddPageState extends State<AddressAddPage> {
         _addressController.text = address.address;
         _detailAddressController.text = address.detailAddress;
         _requestMemo = address.deliveryMemo.isEmpty
-            ? '배송 요청사항을 선택해주세요'
+            ? _memoPlaceholder
             : address.deliveryMemo;
         _setDefault = address.isDefault;
       });
@@ -457,22 +473,18 @@ class _AddressAddPageState extends State<AddressAddPage> {
       await _showNotice(context, '이름을 입력해주세요.');
       return;
     }
-
     if (_phoneController.text.trim().isEmpty) {
-      await _showNotice(context, '휴대폰번호를 입력해주세요.');
+      await _showNotice(context, '휴대폰 번호를 입력해주세요.');
       return;
     }
-
     if (_addressController.text.trim().isEmpty) {
       await _showNotice(context, '주소를 입력해주세요.');
       return;
     }
-
     if (_detailAddressController.text.trim().isEmpty) {
       await _showNotice(context, '상세주소를 입력해주세요.');
       return;
     }
-
     if (_isCustomRequest && _customRequestController.text.trim().isEmpty) {
       await _showNotice(context, '배송 요청사항을 입력해주세요.');
       return;
@@ -482,7 +494,7 @@ class _AddressAddPageState extends State<AddressAddPage> {
     try {
       final deliveryMemo = _isCustomRequest
           ? _customRequestController.text.trim()
-          : _requestMemo == '배송 요청사항을 선택해주세요'
+          : _requestMemo == _memoPlaceholder
           ? ''
           : _requestMemo;
       await _repository.saveAddress(

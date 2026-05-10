@@ -1,18 +1,47 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_exception.dart';
+import '../../data/models/order_model.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/order_repository.dart';
 
 class MyPageViewModel extends ChangeNotifier {
-  MyPageViewModel({AuthRepository? authRepository})
-    : _authRepository = authRepository ?? AuthRepository();
+  MyPageViewModel({
+    AuthRepository? authRepository,
+    OrderRepository? orderRepository,
+  }) : _authRepository = authRepository ?? AuthRepository(),
+       _orderRepository = orderRepository ?? OrderRepository();
 
   final AuthRepository _authRepository;
+  final OrderRepository _orderRepository;
 
   CurrentUserProfile? profile;
+  List<OrderModel> orders = const [];
   bool isLoading = false;
   bool isSaving = false;
   String? errorMessage;
+
+  int get activeOrderCount => orders
+      .where((order) => !{
+            '배송 완료',
+            '환불 완료',
+            '주문 취소',
+          }.contains(order.orderStatusLabel))
+      .length;
+
+  String get activeOrderSummary {
+    if (activeOrderCount == 0) {
+      return '진행 중인 주문 없음';
+    }
+    return '$activeOrderCount건 진행 중';
+  }
+
+  String get recentOrderStatus {
+    if (orders.isEmpty) {
+      return '주문 내역 없음';
+    }
+    return orders.first.orderStatusLabel;
+  }
 
   Future<void> load() async {
     isLoading = true;
@@ -20,7 +49,12 @@ class MyPageViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      profile = await _authRepository.fetchMe();
+      final results = await Future.wait([
+        _authRepository.fetchMe(),
+        _orderRepository.fetchOrders(),
+      ]);
+      profile = results[0] as CurrentUserProfile;
+      orders = results[1] as List<OrderModel>;
     } on ApiException catch (error) {
       errorMessage = error.message;
     } catch (_) {

@@ -219,11 +219,15 @@ class _ProgressPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = order.orderStatusLabel;
     final paidTimeLabel = _dateTimeLabel(order.paidAt ?? order.orderedAt);
-    final isDelivered = status == '배송 완료' || status == '반품 요청 접수';
+    final isReturnRequested = status == '반품 요청 접수';
+    final isRefunded = status == '환불 완료';
+    final isReturnFlow = isReturnRequested || isRefunded;
+    final isDelivered = status == '배송 완료' || isReturnFlow;
     final isShipmentDelivered = shipment?.shipmentStatusLabel == '배송 완료';
     final isShipmentShipped = shipment?.shipmentStatusLabel == '배송 중';
     final isShipped = status == '배송 중' || isDelivered || isShipmentShipped;
     final isFarmChecking = status == '농가 확인 중';
+    final isPaymentPending = status == '결제 대기';
     final isPaid = status == '결제 완료' || isFarmChecking || isShipped;
     final trackingDescription = shipment?.hasTrackingInfo == true
         ? '${shipment!.carrierName} ${shipment!.trackingNumber}로 배송 중입니다.'
@@ -231,17 +235,19 @@ class _ProgressPanel extends StatelessWidget {
 
     final steps = [
       _ProgressStepData(
-        label: '결제 완료',
-        description: '결제가 완료되었습니다.',
-        time: paidTimeLabel,
+        label: isPaymentPending ? '결제 대기' : '결제 완료',
+        description: isPaymentPending
+            ? '결제 완료 후 농가 확인이 시작됩니다.'
+            : '결제가 완료되었습니다.',
+        time: isPaymentPending ? '현재' : paidTimeLabel,
         completed: isPaid,
-        current: status == '결제 완료',
-        icon: Icons.check,
+        current: isPaymentPending || status == '결제 완료',
+        icon: isPaymentPending ? Icons.credit_card_outlined : Icons.check,
       ),
       _ProgressStepData(
         label: '농가 확인 중',
         description: '농가가 수확 가능 수량을 확인하고 있습니다.',
-        time: isFarmChecking ? '현재' : '예정',
+        time: isFarmChecking ? '현재' : (isShipped ? '완료' : '예정'),
         completed: isFarmChecking || isShipped,
         current: isFarmChecking,
         icon: isFarmChecking ? Icons.hourglass_top : Icons.check,
@@ -261,9 +267,20 @@ class _ProgressPanel extends StatelessWidget {
             ? _dateTimeLabel(shipment?.deliveredAt)
             : '예정',
         completed: isDelivered || isShipmentDelivered,
-        current: isDelivered || isShipmentDelivered,
+        current: (status == '배송 완료' || isShipmentDelivered) && !isReturnFlow,
         icon: Icons.check,
       ),
+      if (isReturnFlow)
+        _ProgressStepData(
+          label: '반품 요청 접수',
+          description: isRefunded
+              ? '반품 확인 후 환불이 완료되었습니다.'
+              : '반품 요청이 접수되어 농가 확인을 기다리고 있습니다.',
+          time: isRefunded ? '완료' : '현재',
+          completed: true,
+          current: isReturnRequested,
+          icon: Icons.assignment_return_outlined,
+        ),
     ];
 
     return DecoratedBox(
@@ -415,7 +432,7 @@ class _PaymentInfoPanel extends StatelessWidget {
             else if (payments.isEmpty)
               const NoticeBox(
                 icon: Icons.info_outline,
-                message: '아직 결제 내역이 없습니다.',
+                message: '결제 대기 상태입니다. 결제가 완료되면 결제 정보가 표시됩니다.',
               )
             else
               for (final payment in payments) ...[
@@ -437,6 +454,10 @@ class _PaymentInfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPaymentPending = payment.paymentStatusLabel == '결제 대기';
+    final displayAmount =
+        isPaymentPending ? payment.requestedAmount : payment.approvedAmount;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -480,7 +501,7 @@ class _PaymentInfoRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              formatPrice(payment.approvedAmount),
+              formatPrice(displayAmount),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: Theme.of(context).colorScheme.primary,
@@ -488,7 +509,13 @@ class _PaymentInfoRow extends StatelessWidget {
             ),
           ],
         ),
-        if (payment.requestedAmount != payment.approvedAmount) ...[
+        if (isPaymentPending) ...[
+          const SizedBox(height: 14),
+          _SummaryRow(
+            label: '결제 예정 금액',
+            value: formatPrice(payment.requestedAmount),
+          ),
+        ] else if (payment.requestedAmount != payment.approvedAmount) ...[
           const SizedBox(height: 14),
           _SummaryRow(
             label: '요청 금액',

@@ -30,6 +30,8 @@
 - 웹 프로토타입 페이지: `01_web_prototype/prototype_user_web_m3/pages/`
 - 웹 요약 문서: `사용자웹_필요정보_정리.md`
 - 이메일 인증 최신 정리: `docs/ksm/이메일_인증_최신정리_2026-05-10.md`
+- ML 예측 API 전달 정리: `docs/ksm/ML_예측_API_전달정리_2026-05-10.md`
+- 고객 Web QA 더미 데이터 정리: `docs/ksm/고객웹_QA_더미데이터_생성정리_2026-05-11.md`
 
 ## 3. 구현 위치
 
@@ -133,6 +135,9 @@ C:\Users\User_KO\Documents\GitHub\smart_web\backend
 - 배송지 관리는 `CustomerProfile`의 기본 배송지 필드만으로는 부족하므로 `GET/POST/PUT/DELETE /me/addresses`, `PATCH /me/addresses/{address_id}/default` 계열 API를 직접 추가해서 연결한다.
 - 고객센터와 푸터 정보는 DB에 없으므로 `GET /service-info` 같은 API를 만들지 않고 프론트 더미 데이터로 유지한다.
 - 푸터 전화번호, 이메일, 운영 시간은 사용자 웹 화면에서 정적 데이터로 관리한다.
+- ML 예측 API는 OWNER 전용 `POST /api/v1/owner/ml/predictions`로 연결한다.
+- ML 모델 파일은 `backend/app/ml_models/model.joblib`에 둔다.
+- 고객 예약 웹에는 ML 예측값, 신뢰도, 모델 버전, 내부 예측 근거를 직접 표시하지 않는다.
 
 관련 정리 문서:
 

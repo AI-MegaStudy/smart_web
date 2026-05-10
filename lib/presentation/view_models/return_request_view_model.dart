@@ -6,6 +6,18 @@ import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 import '../../data/repositories/return_repository.dart';
 
+class ReturnEvidenceImage {
+  const ReturnEvidenceImage({
+    required this.fileName,
+    required this.previewUrl,
+    required this.storageUrl,
+  });
+
+  final String fileName;
+  final String previewUrl;
+  final String storageUrl;
+}
+
 class ReturnRequestViewModel extends ChangeNotifier {
   ReturnRequestViewModel({
     required int orderId,
@@ -26,15 +38,47 @@ class ReturnRequestViewModel extends ChangeNotifier {
   String? _errorMessage;
   String reasonCode = 'QUALITY_ISSUE';
   String reasonDetail = '';
+  bool _isCustomAmount = false;
+  int? _customRequestAmount;
+  final List<ReturnEvidenceImage> _evidenceImages = [];
 
   bool get isLoading => _isLoading;
   bool get isSubmitting => _isSubmitting;
   OrderModel? get order => _order;
   ReturnRequestResult? get submittedReturn => _submittedReturn;
   String? get errorMessage => _errorMessage;
+  bool get isCustomAmount => _isCustomAmount;
+  List<ReturnEvidenceImage> get evidenceImages =>
+      List.unmodifiable(_evidenceImages);
+  bool get hasEvidenceImage => _evidenceImages.isNotEmpty;
+  int get evidenceImageCount => _evidenceImages.length;
+  String get evidenceSummaryLabel {
+    if (_evidenceImages.isEmpty) {
+      return '선택 전';
+    }
+    return '${_evidenceImages.length}장 선택';
+  }
+
+  String? get evidenceImageUrl {
+    if (_evidenceImages.isEmpty) {
+      return null;
+    }
+    return _evidenceImages.map((image) => image.storageUrl).join(',');
+  }
+  int get maxRequestAmount => _order?.totalAmount ?? 0;
 
   int get requestAmount {
-    return _order?.totalAmount ?? 0;
+    if (!_isCustomAmount) {
+      return maxRequestAmount;
+    }
+    final amount = _customRequestAmount ?? 0;
+    if (amount < 0) {
+      return 0;
+    }
+    if (amount > maxRequestAmount) {
+      return maxRequestAmount;
+    }
+    return amount;
   }
 
   List<String> get reasonLabels {
@@ -76,6 +120,49 @@ class ReturnRequestViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void selectFullAmount() {
+    _isCustomAmount = false;
+    _customRequestAmount = null;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void selectCustomAmount() {
+    _isCustomAmount = true;
+    _customRequestAmount ??= maxRequestAmount;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void updateCustomRequestAmount(String value) {
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    _customRequestAmount = int.tryParse(digits) ?? 0;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void attachEvidenceImages(
+    List<({String fileName, String previewUrl})> images,
+  ) {
+    _evidenceImages
+      ..clear()
+      ..addAll(
+        images.map((image) {
+          final safeFileName = image.fileName.replaceAll(
+            RegExp(r'[^A-Za-z0-9._-]'),
+            '_',
+          );
+          return ReturnEvidenceImage(
+            fileName: image.fileName,
+            previewUrl: image.previewUrl,
+            storageUrl: '/mock/returns/$safeFileName',
+          );
+        }),
+      );
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   Future<bool> submitReturnRequest() async {
     if (_isSubmitting) {
       return false;
@@ -91,6 +178,7 @@ class ReturnRequestViewModel extends ChangeNotifier {
         reasonCode: reasonCode,
         reasonDetail: reasonDetail.trim(),
         requestedAmount: requestAmount,
+        evidenceImageUrl: evidenceImageUrl,
       );
       return true;
     } on ApiException catch (error) {

@@ -136,7 +136,7 @@ class ProductApiRepository implements ProductRepositoryContract {
     final raw = value?.toString().trim();
     return switch (raw?.toLowerCase()) {
       'fuji' => '부사',
-      'yanggwang' || 'yangkwang' => '양광',
+      'yanggwang' || 'yangkwang' => '신고',
       'shingo' => '신고',
       null || '' => '사과',
       _ => raw!,
