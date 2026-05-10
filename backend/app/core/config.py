@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     dl_quality_timeout_seconds: int = 20
 
     model_config = SettingsConfigDict(
-        env_file=(PROJECT_DIR / ".env", BACKEND_DIR / ".env"),
+        env_file=PROJECT_DIR / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
     )

@@ -397,7 +397,7 @@ class _CheckoutSummary extends StatelessWidget {
                           context,
                           message:
                               viewModel.errorMessage ??
-                              '주문 생성에 실패했습니다. 예약 상태를 다시 확인해주세요.',
+                              '주문서를 완료하지 못했습니다. 예약 상태를 다시 확인해주세요.',
                         );
                         return;
                       }

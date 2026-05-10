@@ -151,13 +151,13 @@ class ApiClient {
       }
     } catch (_) {
       throw ApiException(
-        message: '서버 응답을 확인할 수 없습니다.',
+        message: '정보를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.',
         statusCode: response.statusCode,
       );
     }
 
     throw ApiException(
-      message: '서버 응답 형식이 올바르지 않습니다.',
+      message: '정보를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.',
       statusCode: response.statusCode,
     );
   }
@@ -174,17 +174,24 @@ class ApiClient {
         '인증 요청 내역을 찾을 수 없습니다. 인증 메일을 다시 요청해주세요.',
       'verification code already used' => '이미 사용된 인증 코드입니다.',
       'verification code expired' => '인증 코드가 만료되었습니다. 다시 요청해주세요.',
+      'verification attempts exceeded' =>
+        '인증 코드 입력 횟수를 초과했습니다. 인증 메일을 다시 요청해주세요.',
       'invalid verification code' => '인증 코드가 올바르지 않습니다.',
       'failed to send verification email' => '인증 메일을 보내지 못했습니다.',
       'slot not available' => '현재 예약할 수 없는 수확 슬롯입니다.',
       'requested quantity exceeds available_kg' => '준비된 수량을 초과했습니다.',
       'reservation expired' => '예약 가능 시간이 만료되었습니다.',
       'order not found' => '주문 정보를 찾을 수 없습니다.',
+      'account not found' => '회원 정보를 찾을 수 없습니다.',
+      'profile not found' => '회원 정보를 찾을 수 없습니다.',
+      'customer profile not found' => '회원 정보를 찾을 수 없습니다.',
+      'address not found' => '배송지 정보를 찾을 수 없습니다.',
+      'invalid reservation status' => '현재 주문할 수 없는 예약입니다.',
       'only delivered orders can be returned' => '배송 완료된 주문만 반품 신청이 가능합니다.',
       'return request already exists' => '이미 반품 요청이 접수된 주문입니다.',
       'forbidden' => '접근 권한이 없습니다.',
-      'internal server error' => '서버 처리 중 문제가 발생했습니다.',
-      _ => message.isEmpty ? '요청 처리에 실패했습니다.' : message,
+      'internal server error' => '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.',
+      _ => '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.',
     };
   }
 

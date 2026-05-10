@@ -100,7 +100,7 @@ class PaymentRepository {
   static String _statusLabel(String status) {
     switch (status) {
       case 'APPROVED':
-        return '결제 승인';
+        return '결제 완료';
       case 'PENDING':
       case 'REQUESTED':
         return '결제 대기';

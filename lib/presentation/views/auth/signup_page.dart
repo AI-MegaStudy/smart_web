@@ -79,11 +79,13 @@ class _SignupPageState extends State<SignupPage> {
                   onChanged: _viewModel.updateEmail,
                   keyboardType: TextInputType.emailAddress,
                 ),
-                const SizedBox(height: 7),
-                _ValidationLine(
-                  valid: _viewModel.isEmailValid,
-                  text: _viewModel.emailValidationText,
-                ),
+                if (_viewModel.email.isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  _ValidationLine(
+                    valid: _viewModel.isEmailValid,
+                    text: _viewModel.emailValidationText,
+                  ),
+                ],
                 const SizedBox(height: 14),
                 AuthTextField(
                   label: '비밀번호',
@@ -91,22 +93,26 @@ class _SignupPageState extends State<SignupPage> {
                   onChanged: _viewModel.updatePassword,
                   obscureText: true,
                 ),
-                const SizedBox(height: 7),
-                _ValidationLine(
-                  valid: _viewModel.isPasswordValid,
-                  text: _viewModel.passwordValidationText,
-                ),
+                if (_viewModel.password.isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  _ValidationLine(
+                    valid: _viewModel.isPasswordValid,
+                    text: _viewModel.passwordValidationText,
+                  ),
+                ],
                 const SizedBox(height: 14),
                 AuthTextField(
                   label: '이름',
                   initialValue: _viewModel.name,
                   onChanged: _viewModel.updateName,
                 ),
-                const SizedBox(height: 7),
-                _ValidationLine(
-                  valid: _viewModel.isNameValid,
-                  text: _viewModel.nameValidationText,
-                ),
+                if (_viewModel.name.isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  _ValidationLine(
+                    valid: _viewModel.isNameValid,
+                    text: _viewModel.nameValidationText,
+                  ),
+                ],
                 const SizedBox(height: 14),
                 AuthTextField(
                   label: '전화번호',
@@ -114,11 +120,13 @@ class _SignupPageState extends State<SignupPage> {
                   onChanged: _viewModel.updatePhone,
                   keyboardType: TextInputType.phone,
                 ),
-                const SizedBox(height: 7),
-                _ValidationLine(
-                  valid: _viewModel.isPhoneValid,
-                  text: _viewModel.phoneValidationText,
-                ),
+                if (_viewModel.phone.isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  _ValidationLine(
+                    valid: _viewModel.isPhoneValid,
+                    text: _viewModel.phoneValidationText,
+                  ),
+                ],
                 const SizedBox(height: 22),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

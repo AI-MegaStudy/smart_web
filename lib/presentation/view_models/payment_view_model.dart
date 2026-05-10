@@ -70,7 +70,7 @@ class PaymentViewModel extends ChangeNotifier {
       _errorMessage = error.message;
       return false;
     } catch (_) {
-      _errorMessage = '결제를 승인하지 못했습니다.';
+      _errorMessage = '결제를 완료하지 못했습니다.';
       return false;
     } finally {
       _isSubmitting = false;

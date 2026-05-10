@@ -2228,7 +2228,7 @@ class _FaqSection extends StatelessWidget {
       ),
       _FaqItem(
         question: '예약한 수량이 변경될 수 있나요?',
-        answer: '최종 수량과 금액은 예약 생성 단계에서 다시 확인됩니다.',
+        answer: '최종 수량과 금액은 예약 확정 전에 다시 확인됩니다.',
       ),
       _FaqItem(question: '배송은 언제 시작되나요?', answer: '수확 후 선별이 끝난 상품부터 순차 배송됩니다.'),
       _FaqItem(
@@ -2406,11 +2406,11 @@ class _CleanSupportFooter extends StatelessWidget {
                 children: [
                   _FooterLink(
                     label: '이용약관',
-                    message: '이용약관 페이지는 백엔드 연결 후 별도 화면으로 확장할 수 있습니다.',
+                    message: '이용약관은 현재 고객센터로 문의해 확인할 수 있습니다.',
                   ),
                   _FooterLink(
                     label: '개인정보처리방침',
-                    message: '개인정보처리방침 페이지는 백엔드 연결 후 별도 화면으로 확장할 수 있습니다.',
+                    message: '개인정보처리방침은 현재 고객센터로 문의해 확인할 수 있습니다.',
                   ),
                   const _FooterLink(
                     label: '이메일 문의',

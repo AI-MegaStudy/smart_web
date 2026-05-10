@@ -11,7 +11,7 @@
 - `GET /api/v1/me`: 마이페이지와 회원정보 보기 연결 완료
 - `PUT /api/v1/me`: 회원정보 수정 연결 완료
 - `/api/v1/me/addresses` 계열 API: 배송지 관리와 주문서 작성 기본 배송지 반영 완료
-- 이메일 인증: 팀장님 확인 전까지 보류
+- 이메일 인증: DB 보정 완료 후 재연결 기준으로 정리
 
 ## 2. 현재 프론트 구현 범위
 
@@ -219,24 +219,28 @@ PUT /api/v1/me
 
 회원 정보 수정 화면에는 이메일 옆에 `인증하기` 버튼이 있다.
 
-현재 회원가입 전 이메일 인증 흐름은 구현되어 있으나, 실제 API 검증은 보류 중이다.
+현재 회원가입 전 이메일 인증 흐름은 구현되어 있으며, DB 보정 완료 기준으로 실제 API 재검증 대상이다.
 
-보류 이유:
+DB 보정 완료 항목:
 
-- 가입 전 인증 단계에서는 아직 계정이 없어서 `email_verifications.account_id`가 비어 있을 수 있다.
-- 실제 DB에서 `account_id`가 `NULL`을 허용하지 않으면 이메일 인증 레코드 생성이 실패한다.
-- 실제 SMTP 설정 방식도 팀장님 확인이 필요하다.
+- `email_verifications.account_id`는 가입 전 인증을 위해 `NULL`을 허용한다.
+- `email_verifications.attempt_count`는 인증 코드 실패 횟수 제한에 사용한다.
+- `email_verifications.updated_at`은 백엔드 모델의 `TimestampMixin` 기준으로 매핑한다.
+- `email_verifications.verification_code`는 해시 저장을 위해 `VARCHAR(255)`를 사용한다.
+- 백엔드 환경변수는 프로젝트 루트 `.env` 기준으로 관리한다.
 
-추후 필요한 API:
+필요한 API:
 
 ```text
+POST /api/v1/auth/email/send
 POST /api/v1/auth/email/resend
 POST /api/v1/auth/email/verify
+GET /api/v1/auth/email/status
 ```
 
 ### UX 기준
 
-- 이메일 인증은 팀장님 정책 확정 후 필수/선택 여부를 결정한다.
+- 가입 전 이메일 인증 후 회원가입하는 흐름을 기준으로 한다.
 - 이메일을 변경해도 저장은 가능하다.
 - 인증 완료 전에는 회원 정보 화면에서 `인증 필요` 또는 `미인증` 배지를 표시할 수 있다.
 - 인증 완료 후에는 `인증 완료` 배지를 표시한다.

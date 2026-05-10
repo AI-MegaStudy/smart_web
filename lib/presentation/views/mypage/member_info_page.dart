@@ -184,7 +184,7 @@ class _AccountNoticeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '이름과 전화번호는 수정할 수 있습니다. 이메일 변경은 인증 정책 확인 후 연결 예정입니다.',
+                    '이름과 전화번호는 직접 수정할 수 있습니다. 이메일 변경이 필요하면 고객센터로 문의해주세요.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: const Color(0xFF5F6C62),
                       height: 1.45,

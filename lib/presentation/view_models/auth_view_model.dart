@@ -26,10 +26,10 @@ class AuthViewModel extends ChangeNotifier {
 
   final AuthRepository _authRepository;
 
-  String email = 'customer@test.com';
-  String password = 'pass1234!';
-  String name = '테스트 고객';
-  String phone = '010-1111-2222';
+  String email = '';
+  String password = '';
+  String name = '';
+  String phone = '';
   bool marketingAgreed = false;
   bool isSubmitting = false;
   String? errorMessage;
@@ -239,7 +239,7 @@ class EmailVerifyViewModel extends ChangeNotifier {
   }
 
   final SignupVerificationArgs? signupDraft;
-  String email = 'customer@test.com';
+  String email = '';
   String code = '';
   bool resent = false;
   bool isSending = false;
@@ -365,8 +365,8 @@ class LoginViewModel extends ChangeNotifier {
 
   final AuthRepository _authRepository;
 
-  String email = 'customer@test.com';
-  String password = 'pass1234!';
+  String email = '';
+  String password = '';
   bool isSubmitting = false;
   String? errorMessage;
 

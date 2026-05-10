@@ -420,7 +420,7 @@ class _ReservationSummary extends StatelessWidget {
                           context,
                           message:
                               viewModel.previewErrorMessage ??
-                              '예약 생성에 실패했습니다. 예약 내용을 다시 확인해주세요.',
+                              '예약을 완료하지 못했습니다. 예약 내용을 다시 확인해주세요.',
                         );
                         return;
                       }

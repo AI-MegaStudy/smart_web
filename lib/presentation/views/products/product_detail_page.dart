@@ -149,7 +149,7 @@ class _PreparingDetailHero extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const StatusBadge(label: '다음 수확 준비중'),
+                  const StatusBadge(label: '다음 수확 준비 중'),
                   const SizedBox(height: 14),
                   Text(
                     product.name,

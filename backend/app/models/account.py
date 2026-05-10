@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.models import Base, TimestampMixin
@@ -64,7 +64,7 @@ class OwnerProfile(Base, TimestampMixin):
     quality_inspections: Mapped[list["QualityInspection"]] = relationship(back_populates="owner")
 
 
-class EmailVerification(Base):
+class EmailVerification(Base, TimestampMixin):
     __tablename__ = "email_verifications"
 
     email_verification_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -75,6 +75,6 @@ class EmailVerification(Base):
     verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     account: Mapped[Account | None] = relationship(back_populates="email_verifications")

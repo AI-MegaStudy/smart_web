@@ -60,7 +60,7 @@ class ProductCard extends StatelessWidget {
                           if (product.isLowStock)
                             const StatusBadge(label: '잔여 수량 적음', warning: true)
                           else if (!product.isReservable)
-                            const _StateLabel(label: '다음 수확 준비중'),
+                            const _StateLabel(label: '다음 수확 준비 중'),
                         ],
                       ),
                       SizedBox(height: isCompact ? 7 : 8),
@@ -80,7 +80,7 @@ class ProductCard extends StatelessWidget {
                                 ),
                               ]
                             : [
-                                const StatusBadge(label: '수확 일정 준비중'),
+                                const StatusBadge(label: '수확 일정 준비 중'),
                                 _MetaChip(
                                   label: '확정 후 예약 가능',
                                   compact: isCompact,

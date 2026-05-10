@@ -88,7 +88,7 @@ class ReservationConfirmViewModel extends ChangeNotifier {
       _previewErrorMessage = error.message;
       return null;
     } catch (_) {
-      _previewErrorMessage = '예약을 생성하지 못했습니다.';
+      _previewErrorMessage = '예약을 완료하지 못했습니다.';
       return null;
     } finally {
       _isSubmitting = false;

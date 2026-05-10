@@ -232,7 +232,7 @@ class _ProgressPanel extends StatelessWidget {
     final steps = [
       _ProgressStepData(
         label: '결제 완료',
-        description: '결제 승인이 완료되었습니다.',
+        description: '결제가 완료되었습니다.',
         time: paidTimeLabel,
         completed: isPaid,
         current: status == '결제 완료',
@@ -496,7 +496,7 @@ class _PaymentInfoRow extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           _SummaryRow(
-            label: '승인 금액',
+            label: '결제 금액',
             value: formatPrice(payment.approvedAmount),
           ),
         ],

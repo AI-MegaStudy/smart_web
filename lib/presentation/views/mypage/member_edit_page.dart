@@ -82,7 +82,7 @@ class _MemberEditPageState extends State<MemberEditPage> {
                               isSaving: _viewModel.isSaving,
                               onVerifyEmail: () => showAppAlertDialog(
                                 context,
-                                message: '이메일 변경과 재인증은 팀장 확인 후 연결 예정입니다.',
+                                message: '현재 이메일 변경은 고객센터 문의 후 진행할 수 있습니다.',
                               ),
                               onSave: _save,
                             ),
@@ -236,7 +236,7 @@ class _EditForm extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '이메일 변경은 인증 정책 확인 후 연결 예정입니다. 현재는 이름과 전화번호만 수정할 수 있습니다.',
+              '현재는 이름과 전화번호만 직접 수정할 수 있습니다. 이메일 변경이 필요하면 고객센터로 문의해주세요.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: const Color(0xFF657166),
                 height: 1.4,

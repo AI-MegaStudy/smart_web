@@ -91,6 +91,7 @@ class EmailVerificationService:
             verified=False,
             expires_at=expires_at,
             verified_at=None,
+            attempt_count=0,
         )
         self.session.add(verification)
         self.session.flush()
@@ -128,8 +129,14 @@ class EmailVerificationService:
             raise HTTPException(status_code=400, detail="verification code already used")
         if verification.expires_at < datetime.utcnow():
             raise HTTPException(status_code=400, detail="verification code expired")
+        if verification.attempt_count >= settings.email_verification_max_attempts:
+            raise HTTPException(status_code=429, detail="verification attempts exceeded")
 
         if verification.code_hash != self.hash_code(normalized_email, purpose, code):
+            verification.attempt_count += 1
+            self.session.commit()
+            if verification.attempt_count >= settings.email_verification_max_attempts:
+                raise HTTPException(status_code=429, detail="verification attempts exceeded")
             raise HTTPException(status_code=400, detail="invalid verification code")
 
         verification.verified = True
@@ -144,6 +151,12 @@ class EmailVerificationService:
             "purpose": purpose,
             "verified": True,
         }
+
+    def attach_verified_signup_to_account(self, email: str, account_id: int) -> None:
+        normalized_email = normalize_email(email)
+        verification = self._latest_verification(normalized_email, "SIGNUP")
+        if verification and verification.verified:
+            verification.account_id = account_id
 
     def get_status(self, email: str, purpose: str = "SIGNUP") -> dict:
         normalized_email = normalize_email(email)

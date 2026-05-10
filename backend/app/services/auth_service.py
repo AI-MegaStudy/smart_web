@@ -34,6 +34,7 @@ class AuthService:
         )
         self.session.add(account)
         self.session.flush()
+        self.email_verification_service.attach_verified_signup_to_account(normalized_email, account.account_id)
 
         profile = CustomerProfile(
             account_id=account.account_id,
@@ -68,6 +69,7 @@ class AuthService:
         )
         self.session.add(account)
         self.session.flush()
+        self.email_verification_service.attach_verified_signup_to_account(normalized_email, account.account_id)
 
         profile = OwnerProfile(
             account_id=account.account_id,

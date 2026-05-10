@@ -160,7 +160,7 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
     if (!approved) {
       await showAppAlertDialog(
         context,
-        message: _viewModel.errorMessage ?? '결제 승인에 실패했습니다.',
+        message: _viewModel.errorMessage ?? '결제를 완료하지 못했습니다.',
       );
       return;
     }
@@ -513,8 +513,8 @@ class _PaymentMethodSelector extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         isCard
-                            ? 'Harvest Slot 시연용 결제 수단입니다.'
-                            : '해당 결제 수단은 준비 중입니다.',
+                            ? '현재 선택할 수 있는 카드 결제 수단입니다.'
+                            : '해당 결제 수단은 아직 이용할 수 없습니다.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: const Color(0xFF5F6C62),
                           fontWeight: FontWeight.w700,
@@ -523,7 +523,7 @@ class _PaymentMethodSelector extends StatelessWidget {
                     ],
                   ),
                 ),
-                _SmallBadge(label: isCard ? '시연 가능' : '준비 중'),
+                _SmallBadge(label: isCard ? '이용 가능' : '준비 중'),
               ],
             ),
           ),

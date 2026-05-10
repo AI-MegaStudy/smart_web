@@ -29,6 +29,7 @@
 - 웹 프로토타입: `01_web_prototype/prototype_user_web_m3/index.html`
 - 웹 프로토타입 페이지: `01_web_prototype/prototype_user_web_m3/pages/`
 - 웹 요약 문서: `사용자웹_필요정보_정리.md`
+- 이메일 인증 최신 정리: `docs/ksm/이메일_인증_최신정리_2026-05-10.md`
 
 ## 3. 구현 위치
 
@@ -77,6 +78,7 @@ C:\Users\User_KO\Documents\GitHub\smart_web\backend
 - API Base URL은 `/api/v1`이다.
 - 로컬 개발 기본 주소는 `http://localhost:8000/api/v1`로 본다.
 - Swagger 확인 주소는 `http://localhost:8000/docs`이다.
+- 백엔드 환경변수 파일은 `C:\Users\User_KO\Documents\GitHub\smart_web\.env`를 기준으로 한다. 기존 `backend/.env`가 있더라도 실제 작업 기준은 프로젝트 루트 `.env`이다.
 - DB 연결은 `backend/app/core/config.py` 기준 MySQL 계열이다.
 - DB URL은 `mysql+pymysql://<user>:<password>@<host>:3306/harvest_slot_db?charset=utf8mb4` 형태로 조합된다.
 - 로컬 MySQL, 팀 공용 MySQL, AWS RDS MySQL 모두 환경변수 설정으로 연결 가능하다.
@@ -118,14 +120,16 @@ C:\Users\User_KO\Documents\GitHub\smart_web\backend
 - `POST /returns`
 - `GET /me/returns`
 
-아직 백엔드 협의가 필요한 부분:
+아직 백엔드 협의 또는 추후 정리가 필요한 부분:
 
-- 여러 배송지 관리 API: 관련 필드는 있으나 API가 없으므로 프론트 담당자가 백엔드에 직접 추가한다.
-- 회원정보 수정 API: `PUT /me`
+- 여러 배송지 정식 관리: 현재는 MVP 기준으로 `CustomerProfile`의 기본 배송지 필드를 사용한다. 별도 배송지 테이블이 생기면 API 재구현이 필요하다.
 - 일부 백엔드 문서와 스키마 예시의 한글 깨짐 정리
 
 팀장 컨펌 반영 결정사항:
 
+- 이메일 인증은 DB에서 `email_verifications.attempt_count`, `updated_at`, `account_id NULL 허용`, `verification_code VARCHAR(255)` 보정 및 테스트가 완료된 상태로 본다.
+- 백엔드 이메일 인증 모델과 서비스는 위 DB 기준에 맞춰 `attempt_count` 실패 횟수 제한, `updated_at` 자동 매핑, 가입 전 인증 후 회원가입 시 `account_id` 연결을 유지한다.
+- SMTP와 DB 등 백엔드 환경변수는 프로젝트 루트 `.env`에서 관리한다.
 - 배송지 관리는 `CustomerProfile`의 기본 배송지 필드만으로는 부족하므로 `GET/POST/PUT/DELETE /me/addresses`, `PATCH /me/addresses/{address_id}/default` 계열 API를 직접 추가해서 연결한다.
 - 고객센터와 푸터 정보는 DB에 없으므로 `GET /service-info` 같은 API를 만들지 않고 프론트 더미 데이터로 유지한다.
 - 푸터 전화번호, 이메일, 운영 시간은 사용자 웹 화면에서 정적 데이터로 관리한다.

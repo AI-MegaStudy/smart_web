@@ -154,7 +154,7 @@ class CheckoutViewModel extends ChangeNotifier {
       _errorMessage = error.message;
       return null;
     } catch (_) {
-      _errorMessage = '주문을 생성하지 못했습니다.';
+      _errorMessage = '주문서를 완료하지 못했습니다.';
       return null;
     } finally {
       _isSubmitting = false;
