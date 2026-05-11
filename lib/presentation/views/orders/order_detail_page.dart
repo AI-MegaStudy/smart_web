@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/order_status_mapper.dart';
 import '../../../data/models/local_basket_item_model.dart';
 import '../../../data/models/order_model.dart';
 import '../../../data/repositories/payment_repository.dart';
@@ -217,18 +218,53 @@ class _ProgressPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = order.orderStatusLabel;
+    final statusCode = order.orderStatusCode;
+    final returnStatusCode = order.returnStatusCode;
     final paidTimeLabel = _dateTimeLabel(order.paidAt ?? order.orderedAt);
-    final isReturnRequested = status == '반품 요청 접수';
-    final isRefunded = status == '환불 완료';
-    final isReturnFlow = isReturnRequested || isRefunded;
-    final isDelivered = status == '배송 완료' || isReturnFlow;
+    final isPaymentPending = statusCode == OrderStatusMapper.paymentPending;
+    final isProcurementRequested =
+        statusCode == OrderStatusMapper.procurementRequested;
+    final isProcurementApproved =
+        statusCode == OrderStatusMapper.procurementApproved;
+    final isProcurementPartialApproved =
+        statusCode == OrderStatusMapper.procurementPartialApproved;
+    final isProcurementRejected =
+        statusCode == OrderStatusMapper.procurementRejected;
+    final isQualityChecking = statusCode == OrderStatusMapper.qualityChecking;
+    final isReadyToShip = statusCode == OrderStatusMapper.readyToShip;
     final isShipmentDelivered = shipment?.shipmentStatusLabel == '배송 완료';
     final isShipmentShipped = shipment?.shipmentStatusLabel == '배송 중';
-    final isShipped = status == '배송 중' || isDelivered || isShipmentShipped;
-    final isFarmChecking = status == '농가 확인 중';
-    final isPaymentPending = status == '결제 대기';
-    final isPaid = status == '결제 완료' || isFarmChecking || isShipped;
+    final isReturnRejected =
+        returnStatusCode == OrderStatusMapper.returnRequestRejected;
+    final isReturnApproved =
+        returnStatusCode == OrderStatusMapper.returnRequestApproved;
+    final isReturnRequested =
+        statusCode == OrderStatusMapper.returnRequested &&
+        !isReturnRejected &&
+        !isReturnApproved;
+    final isRefunded =
+        statusCode == OrderStatusMapper.refunded ||
+        returnStatusCode == OrderStatusMapper.refunded;
+    final isReturnFlow =
+        isReturnRequested || isReturnApproved || isReturnRejected || isRefunded;
+    final isDelivered =
+        statusCode == OrderStatusMapper.delivered ||
+        isShipmentDelivered ||
+        isReturnFlow;
+    final isShipped =
+        statusCode == OrderStatusMapper.shipped ||
+        isDelivered ||
+        isShipmentShipped;
+    final isPaid = !isPaymentPending;
+    final farmStep = _farmStep(
+      isProcurementRequested: isProcurementRequested,
+      isProcurementApproved: isProcurementApproved,
+      isProcurementPartialApproved: isProcurementPartialApproved,
+      isProcurementRejected: isProcurementRejected,
+      isQualityChecking: isQualityChecking,
+      isReadyToShip: isReadyToShip,
+      isShipped: isShipped,
+    );
     final trackingDescription = shipment?.hasTrackingInfo == true
         ? '${shipment!.carrierName} ${shipment!.trackingNumber}로 배송 중입니다.'
         : '배송이 시작되면 운송장 정보가 표시됩니다.';
@@ -241,45 +277,71 @@ class _ProgressPanel extends StatelessWidget {
             : '결제가 완료되었습니다.',
         time: isPaymentPending ? '현재' : paidTimeLabel,
         completed: isPaid,
-        current: isPaymentPending || status == '결제 완료',
+        current: isPaymentPending || statusCode == OrderStatusMapper.paid,
         icon: isPaymentPending ? Icons.credit_card_outlined : Icons.check,
       ),
       _ProgressStepData(
-        label: '농가 확인 중',
-        description: '농가가 수확 가능 수량을 확인하고 있습니다.',
-        time: isFarmChecking ? '현재' : (isShipped ? '완료' : '예정'),
-        completed: isFarmChecking || isShipped,
-        current: isFarmChecking,
-        icon: isFarmChecking ? Icons.hourglass_top : Icons.check,
+        label: farmStep.label,
+        description: farmStep.description,
+        time: farmStep.current ? '현재' : (farmStep.completed ? '완료' : '예정'),
+        completed: farmStep.completed,
+        current: farmStep.current,
+        icon: farmStep.icon,
       ),
-      _ProgressStepData(
-        label: '배송 중',
-        description: trackingDescription,
-        time: isShipped ? _dateTimeLabel(shipment?.shippedAt) : '예정',
-        completed: isShipped,
-        current: status == '배송 중' || isShipmentShipped,
-        icon: Icons.local_shipping_outlined,
-      ),
-      _ProgressStepData(
-        label: '배송 완료',
-        description: '배송 완료 후 조건에 따라 반품 신청이 가능합니다.',
-        time: isDelivered || isShipmentDelivered
-            ? _dateTimeLabel(shipment?.deliveredAt)
-            : '예정',
-        completed: isDelivered || isShipmentDelivered,
-        current: (status == '배송 완료' || isShipmentDelivered) && !isReturnFlow,
-        icon: Icons.check,
-      ),
+      if (!isProcurementRejected) ...[
+        _ProgressStepData(
+          label: isReadyToShip ? '발송 준비' : '배송 중',
+          description: isReadyToShip
+              ? '농가가 발송 준비를 진행하고 있습니다.'
+              : trackingDescription,
+          time: isShipped ? _dateTimeLabel(shipment?.shippedAt) : '예정',
+          completed: isShipped || isReadyToShip,
+          current:
+              isReadyToShip ||
+              statusCode == OrderStatusMapper.shipped ||
+              isShipmentShipped,
+          icon: isReadyToShip
+              ? Icons.inventory_2_outlined
+              : Icons.local_shipping_outlined,
+        ),
+        _ProgressStepData(
+          label: '배송 완료',
+          description: '배송 완료 후 조건에 따라 반품 신청이 가능합니다.',
+          time: isDelivered || isShipmentDelivered
+              ? _dateTimeLabel(shipment?.deliveredAt)
+              : '예정',
+          completed: isDelivered || isShipmentDelivered,
+          current:
+              (statusCode == OrderStatusMapper.delivered ||
+                  isShipmentDelivered) &&
+              !isReturnFlow,
+          icon: Icons.check,
+        ),
+      ],
       if (isReturnFlow)
         _ProgressStepData(
-          label: '반품 요청 접수',
+          label: isRefunded
+              ? '환불 완료'
+              : isReturnRejected
+              ? '반품 반려'
+              : isReturnApproved
+              ? '반품 승인'
+              : '반품 요청 접수',
           description: isRefunded
               ? '반품 확인 후 환불이 완료되었습니다.'
+              : isReturnRejected
+              ? '반품 요청이 반려되었습니다. 자세한 사유는 반품 내역에서 확인할 수 있습니다.'
+              : isReturnApproved
+              ? '반품 요청이 승인되어 환불 처리를 준비하고 있습니다.'
               : '반품 요청이 접수되어 농가 확인을 기다리고 있습니다.',
-          time: isRefunded ? '완료' : '현재',
+          time: isRefunded || isReturnApproved || isReturnRejected
+              ? '완료'
+              : '현재',
           completed: true,
-          current: isReturnRequested,
-          icon: Icons.assignment_return_outlined,
+          current: isReturnRequested || isReturnApproved,
+          icon: isReturnRejected
+              ? Icons.block_outlined
+              : Icons.assignment_return_outlined,
         ),
     ];
 
@@ -322,6 +384,75 @@ class _ProgressPanel extends StatelessWidget {
     final hour = local.hour.toString().padLeft(2, '0');
     final minute = local.minute.toString().padLeft(2, '0');
     return '$month.$day $hour:$minute';
+  }
+
+  _ProgressStepData _farmStep({
+    required bool isProcurementRequested,
+    required bool isProcurementApproved,
+    required bool isProcurementPartialApproved,
+    required bool isProcurementRejected,
+    required bool isQualityChecking,
+    required bool isReadyToShip,
+    required bool isShipped,
+  }) {
+    if (isProcurementRejected) {
+      return const _ProgressStepData(
+        label: '농가 승인 불가',
+        description: '농가가 수확 가능 수량을 확보하지 못했습니다. 취소 또는 재주문 안내가 필요할 수 있습니다.',
+        time: '현재',
+        completed: true,
+        current: true,
+        icon: Icons.block_outlined,
+      );
+    }
+    if (isProcurementPartialApproved) {
+      return const _ProgressStepData(
+        label: '일부 수량 확인 필요',
+        description: '농가가 일부 수량만 가능하다고 확인했습니다. 주문 조정 안내가 필요할 수 있습니다.',
+        time: '현재',
+        completed: true,
+        current: true,
+        icon: Icons.info_outline,
+      );
+    }
+    if (isQualityChecking) {
+      return const _ProgressStepData(
+        label: '선별 중',
+        description: '수확한 상품을 선별하고 있습니다.',
+        time: '현재',
+        completed: true,
+        current: true,
+        icon: Icons.fact_check_outlined,
+      );
+    }
+    if (isReadyToShip || isShipped) {
+      return const _ProgressStepData(
+        label: '농가 승인 완료',
+        description: '농가가 주문 수량을 확인하고 발송 준비 단계로 넘겼습니다.',
+        time: '완료',
+        completed: true,
+        current: false,
+        icon: Icons.check,
+      );
+    }
+    if (isProcurementApproved) {
+      return const _ProgressStepData(
+        label: '농가 승인 완료',
+        description: '농가가 주문 수량을 확인했습니다.',
+        time: '현재',
+        completed: true,
+        current: true,
+        icon: Icons.check,
+      );
+    }
+    return _ProgressStepData(
+      label: '농가 확인 중',
+      description: '농가가 수확 가능 수량을 확인하고 있습니다.',
+      time: isProcurementRequested ? '현재' : '예정',
+      completed: isProcurementRequested,
+      current: isProcurementRequested,
+      icon: isProcurementRequested ? Icons.hourglass_top : Icons.check,
+    );
   }
 }
 

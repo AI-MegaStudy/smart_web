@@ -4,7 +4,10 @@ class OrderModel {
   const OrderModel({
     required this.orderId,
     required this.orderNumber,
+    required this.orderStatusCode,
     required this.orderStatusLabel,
+    required this.returnStatusCode,
+    required this.returnStatusLabel,
     required this.receiverName,
     required this.receiverPhone,
     required this.shippingAddress,
@@ -19,7 +22,10 @@ class OrderModel {
 
   final int orderId;
   final String orderNumber;
+  final String orderStatusCode;
   final String orderStatusLabel;
+  final String returnStatusCode;
+  final String returnStatusLabel;
   final String receiverName;
   final String receiverPhone;
   final String shippingAddress;

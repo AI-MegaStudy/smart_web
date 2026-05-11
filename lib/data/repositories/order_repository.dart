@@ -105,12 +105,17 @@ class OrderRepository implements OrderRepositoryContract {
 
   static OrderModel _orderFromJson(Map<String, dynamic> json) {
     final rawItems = json['order_items'] as List<dynamic>? ?? const [];
+    final orderStatusCode = json['order_status']?.toString() ?? '';
+    final returnStatusCode = json['return_status']?.toString() ?? '';
     return OrderModel(
       orderId: _asInt(json['order_id']),
       orderNumber: json['order_no']?.toString() ?? '',
-      orderStatusLabel: OrderStatusMapper.labelOf(
-        json['order_status']?.toString() ?? '',
-      ),
+      orderStatusCode: orderStatusCode,
+      orderStatusLabel: OrderStatusMapper.labelOf(orderStatusCode),
+      returnStatusCode: returnStatusCode,
+      returnStatusLabel: returnStatusCode.isEmpty
+          ? ''
+          : OrderStatusMapper.returnLabelOf(returnStatusCode),
       receiverName: json['receiver_name']?.toString() ?? '',
       receiverPhone: json['receiver_phone']?.toString() ?? '',
       shippingAddress: json['shipping_address']?.toString() ?? '',
