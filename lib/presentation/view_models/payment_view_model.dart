@@ -65,6 +65,7 @@ class PaymentViewModel extends ChangeNotifier {
         orderId: orderId,
         idempotencyKey: 'payment-order-$orderId-mock-approve',
       );
+      _localBasketRepository.replaceItems(const []);
       return true;
     } on ApiException catch (error) {
       _errorMessage = error.message;

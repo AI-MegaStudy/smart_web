@@ -160,7 +160,7 @@ class _PreparingDetailHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '${product.farmName} · ${product.name}',
+                    '${product.farmLabel} · ${product.name}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: const Color(0xFF5F6C62),
                     ),
@@ -266,7 +266,7 @@ class _DetailHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '${product.farmName} · ${product.name}',
+                    '${product.farmLabel} · ${product.name}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: const Color(0xFF5F6C62),
                     ),
@@ -372,7 +372,7 @@ class _DetailHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 image,
-                const SizedBox(height: 14),
+                _FarmImagePanel(product: product),
                 productStory,
                 const SizedBox(height: 18),
                 info,
@@ -387,7 +387,11 @@ class _DetailHero extends StatelessWidget {
                 flex: 95,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [image, const SizedBox(height: 14), productStory],
+                  children: [
+                    image,
+                    _FarmImagePanel(product: product),
+                    productStory,
+                  ],
                 ),
               ),
               const SizedBox(width: 20),
@@ -425,6 +429,50 @@ class _BasketAddedDialog extends StatelessWidget {
   }
 }
 
+class _FarmImagePanel extends StatefulWidget {
+  const _FarmImagePanel({required this.product});
+
+  final ProductModel product;
+
+  @override
+  State<_FarmImagePanel> createState() => _FarmImagePanelState();
+}
+
+class _FarmImagePanelState extends State<_FarmImagePanel> {
+  bool _hasLoadError = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = widget.product.farmImageUrl.trim();
+
+    if (imageUrl.isEmpty || _hasLoadError) {
+      return const SizedBox(height: 14);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: AspectRatio(
+          aspectRatio: 16 / 6.2,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() => _hasLoadError = true);
+                }
+              });
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProductStoryPanel extends StatelessWidget {
   const _ProductStoryPanel({required this.product});
 
@@ -452,7 +500,7 @@ class _ProductStoryPanel extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '농가가 확정한 수확 예정 기간에 맞춰 예약을 받고, 수확 후 선별하여 순차 배송합니다.',
+              _descriptionText(product),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.55,
                 color: const Color(0xFF5F6C62),
@@ -464,20 +512,32 @@ class _ProductStoryPanel extends StatelessWidget {
               runSpacing: 10,
               children: [
                 _InfoTile(
-                  icon: Icons.event_available_outlined,
-                  title: '수확 예정',
-                  value:
-                      '${product.harvestStartLabel}-${product.harvestEndLabel}',
+                  icon: Icons.place_outlined,
+                  title: '농장 지역',
+                  value: product.farmRegion.isEmpty
+                      ? '지역 확인 중'
+                      : product.farmRegion,
                 ),
-                const _InfoTile(
+                _InfoTile(
+                  icon: Icons.map_outlined,
+                  title: '농장 주소',
+                  value: product.farmAddress.isEmpty
+                      ? '주소 확인 중'
+                      : product.farmAddress,
+                ),
+                _InfoTile(
                   icon: Icons.local_shipping_outlined,
                   title: '배송 안내',
-                  value: '수확 후 선별 직배송',
+                  value: product.deliveryPolicy.isEmpty
+                      ? '수확 후 선별 직배송'
+                      : product.deliveryPolicy,
                 ),
-                const _InfoTile(
-                  icon: Icons.verified_outlined,
-                  title: '예약 안내',
-                  value: '농가 확정 수량 기준',
+                _InfoTile(
+                  icon: Icons.assignment_return_outlined,
+                  title: '반품 안내',
+                  value: product.returnPolicy.isEmpty
+                      ? '수령 후 상태 확인 기준'
+                      : product.returnPolicy,
                 ),
               ],
             ),
@@ -485,6 +545,22 @@ class _ProductStoryPanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _descriptionText(ProductModel product) {
+    final productDescription = product.productDescription.trim();
+    final farmDescription = product.farmDescription.trim();
+
+    if (productDescription.isNotEmpty && farmDescription.isNotEmpty) {
+      return '$productDescription\n\n$farmDescription';
+    }
+    if (productDescription.isNotEmpty) {
+      return productDescription;
+    }
+    if (farmDescription.isNotEmpty) {
+      return farmDescription;
+    }
+    return '농가가 확정한 수확 예정 기간에 맞춰 예약을 받고, 수확 후 선별하여 순차 배송합니다.';
   }
 }
 
@@ -502,7 +578,7 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
+      width: 236,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F8F3),

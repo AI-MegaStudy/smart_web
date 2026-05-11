@@ -42,7 +42,11 @@ def serialize_product(product: Product, open_slot_count: int | None = None) -> d
         "product_description": product.product_description,
         "farm_name": product.farm.farm_name if product.farm else None,
         "farm_region": product.farm.farm_region if product.farm else None,
+        "farm_address": product.farm.farm_address if product.farm else None,
         "farm_image_url": product.farm.farm_image_url if product.farm else None,
+        "farm_description": product.farm.farm_description if product.farm else None,
+        "delivery_policy": product.farm.delivery_policy if product.farm else None,
+        "return_policy": product.farm.return_policy if product.farm else None,
         "open_slot_count": open_slot_count if open_slot_count is not None else 0,
         "min_open_slot_price": min_open_price,
     }

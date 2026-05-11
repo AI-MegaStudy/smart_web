@@ -85,7 +85,13 @@ class ProductApiRepository implements ProductRepositoryContract {
     return ProductModel(
       productId: _asInt(json['product_id']),
       name: _productName(json),
-      farmName: json['farm_name']?.toString() ?? '농장 정보 확인 중',
+      farmName: _farmString(json, 'farm_name', fallback: '농장 정보 확인 중'),
+      farmRegion: _farmString(json, 'farm_region'),
+      farmAddress: _farmString(json, 'farm_address'),
+      farmImageUrl: _farmString(json, 'farm_image_url'),
+      farmDescription: _farmString(json, 'farm_description'),
+      deliveryPolicy: _farmString(json, 'delivery_policy'),
+      returnPolicy: _farmString(json, 'return_policy'),
       variety: _varietyName(json['variety']),
       packageUnitKg: _asDouble(json['package_unit_kg']),
       price:
@@ -94,7 +100,10 @@ class ProductApiRepository implements ProductRepositoryContract {
       harvestStartLabel: firstSlot?.harvestStartLabel ?? '',
       harvestEndLabel: firstSlot?.harvestEndLabel ?? '',
       availableKg: firstSlot?.availableKg ?? _asDouble(json['available_kg']),
-      imageUrl: _imageUrl(json['image_url']),
+      imageUrl: _imageUrl(
+        json['image_url'] ?? _farmValue(json, 'farm_image_url'),
+      ),
+      productDescription: json['product_description']?.toString().trim() ?? '',
       openSlotCount: firstSlot == null
           ? openSlotCount
           : openSlotCount < 1
@@ -125,6 +134,10 @@ class ProductApiRepository implements ProductRepositoryContract {
     final variety = _varietyName(json['variety']);
     final fruit = _fruitName(json['fruit_type'], displayName);
 
+    if (variety == '부사' || variety == '양광') {
+      return '$variety 사과';
+    }
+
     if (variety.isNotEmpty && fruit.isNotEmpty) {
       return '$variety $fruit';
     }
@@ -136,8 +149,9 @@ class ProductApiRepository implements ProductRepositoryContract {
     final raw = value?.toString().trim();
     return switch (raw?.toLowerCase()) {
       'fuji' => '부사',
-      'yanggwang' || 'yangkwang' => '신고',
-      'shingo' => '신고',
+      'yanggwang' || 'yangkwang' => '양광',
+      'shingo' => '양광',
+      '신고' => '양광',
       null || '' => '사과',
       _ => raw!,
     };
@@ -173,6 +187,31 @@ class ProductApiRepository implements ProductRepositoryContract {
       return 'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?auto=format&fit=crop&w=900&q=80';
     }
     return url;
+  }
+
+  Object? _farmValue(Map<String, dynamic> json, String key) {
+    final direct = json[key];
+    if (direct != null) {
+      return direct;
+    }
+
+    final farm = json['farm'];
+    if (farm is Map<String, dynamic>) {
+      return farm[key];
+    }
+    return null;
+  }
+
+  String _farmString(
+    Map<String, dynamic> json,
+    String key, {
+    String fallback = '',
+  }) {
+    final value = _farmValue(json, key)?.toString().trim();
+    if (value == null || value.isEmpty) {
+      return fallback;
+    }
+    return value;
   }
 
   int _asInt(Object? value) {

@@ -190,10 +190,8 @@ class _ReturnListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final requestedAt = item.requestedAt;
-    final requestedAtLabel = requestedAt == null
-        ? '접수일 확인 중'
-        : '${requestedAt.toLocal().month.toString().padLeft(2, '0')}.${requestedAt.toLocal().day.toString().padLeft(2, '0')} ${requestedAt.toLocal().hour.toString().padLeft(2, '0')}:${requestedAt.toLocal().minute.toString().padLeft(2, '0')}';
+    final requestedAtLabel = _dateTimeLabel(item.requestedAt, '접수일 확인 중');
+    final decidedAtLabel = _dateTimeLabel(item.decidedAt, '');
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -240,12 +238,29 @@ class _ReturnListItem extends StatelessWidget {
                         StatusBadge(label: item.reasonLabel),
                         StatusBadge(label: formatPrice(item.requestedAmount)),
                         StatusBadge(label: requestedAtLabel),
+                        if (item.approvedAmount > 0)
+                          StatusBadge(
+                            label: '승인 ${formatPrice(item.approvedAmount)}',
+                          ),
+                        if (decidedAtLabel.isNotEmpty)
+                          StatusBadge(label: decidedAtLabel),
                       ],
                     ),
                     if (item.reasonDetail.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
                         item.reasonDetail,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF4B584D),
+                        ),
+                      ),
+                    ],
+                    if (item.decisionReason.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        item.decisionReason,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -265,6 +280,18 @@ class _ReturnListItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _dateTimeLabel(DateTime? value, String fallback) {
+    if (value == null) {
+      return fallback;
+    }
+    final local = value.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$month.$day $hour:$minute';
   }
 }
 

@@ -29,9 +29,9 @@ class ProductRepository implements ProductRepositoryContract {
 const _products = [
   ProductModel(
     productId: 3,
-    name: '신고 사과',
+    name: '양광 사과',
     farmName: '문경 햇살 농장',
-    variety: '신고',
+    variety: '양광',
     packageUnitKg: 5,
     price: 39000,
     harvestStartLabel: '10.12',
@@ -55,9 +55,9 @@ const _products = [
   ),
   ProductModel(
     productId: 5,
-    name: '신고 사과',
+    name: '양광 사과',
     farmName: '문경 햇살 농장',
-    variety: '신고',
+    variety: '양광',
     packageUnitKg: 7.5,
     price: 68000,
     harvestStartLabel: '09.28',

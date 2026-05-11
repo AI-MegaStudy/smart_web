@@ -2,30 +2,7 @@ import '../models/local_basket_item_model.dart';
 import 'repository_contracts.dart';
 
 class LocalBasketRepository implements LocalBasketRepositoryContract {
-  static final List<LocalBasketItemModel> _items = [
-    const LocalBasketItemModel(
-      slotId: 12,
-      productId: 3,
-      productName: '신고 사과',
-      farmName: '문경 햇살 농장',
-      harvestStartLabel: '10.12',
-      harvestEndLabel: '10.18',
-      packageUnitKg: 5,
-      unitPrice: 39000,
-      packageCount: 2,
-    ),
-    const LocalBasketItemModel(
-      slotId: 21,
-      productId: 4,
-      productName: '부사 사과',
-      farmName: '문경 햇살 농장',
-      harvestStartLabel: '10.20',
-      harvestEndLabel: '10.27',
-      packageUnitKg: 3,
-      unitPrice: 32000,
-      packageCount: 1,
-    ),
-  ];
+  static final List<LocalBasketItemModel> _items = [];
 
   @override
   Future<List<LocalBasketItemModel>> fetchItems() async {

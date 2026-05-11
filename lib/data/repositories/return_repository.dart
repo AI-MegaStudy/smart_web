@@ -28,7 +28,10 @@ class ReturnHistoryItem {
     required this.reasonLabel,
     required this.reasonDetail,
     required this.requestedAmount,
+    required this.approvedAmount,
+    required this.decisionReason,
     this.requestedAt,
+    this.decidedAt,
   });
 
   final int returnRequestId;
@@ -39,7 +42,10 @@ class ReturnHistoryItem {
   final String reasonLabel;
   final String reasonDetail;
   final int requestedAmount;
+  final int approvedAmount;
+  final String decisionReason;
   final DateTime? requestedAt;
+  final DateTime? decidedAt;
 }
 
 class ReturnRepository {
@@ -120,7 +126,10 @@ class ReturnRepository {
       reasonLabel: _reasonLabel(json['reason_code']?.toString() ?? ''),
       reasonDetail: json['reason_detail']?.toString() ?? '',
       requestedAmount: _asInt(json['requested_amount']),
+      approvedAmount: _asInt(json['approved_amount']),
+      decisionReason: json['decision_reason']?.toString() ?? '',
       requestedAt: _asDateTime(json['requested_at']),
+      decidedAt: _asDateTime(json['decided_at']),
     );
   }
 

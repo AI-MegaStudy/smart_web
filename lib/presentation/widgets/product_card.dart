@@ -89,7 +89,7 @@ class ProductCard extends StatelessWidget {
                       ),
                       SizedBox(height: isCompact ? 8 : 10),
                       Text(
-                        product.farmName,
+                        product.farmLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(

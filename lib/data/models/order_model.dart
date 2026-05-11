@@ -6,10 +6,13 @@ class OrderModel {
     required this.orderNumber,
     required this.orderStatusLabel,
     required this.receiverName,
+    required this.receiverPhone,
     required this.shippingAddress,
+    required this.deliveryMemo,
     required this.carrierName,
     required this.trackingNumber,
     required this.items,
+    required this.serverTotalAmount,
     this.orderedAt,
     this.paidAt,
   });
@@ -18,14 +21,20 @@ class OrderModel {
   final String orderNumber;
   final String orderStatusLabel;
   final String receiverName;
+  final String receiverPhone;
   final String shippingAddress;
+  final String deliveryMemo;
   final String carrierName;
   final String trackingNumber;
   final List<LocalBasketItemModel> items;
+  final int serverTotalAmount;
   final DateTime? orderedAt;
   final DateTime? paidAt;
 
   int get totalAmount {
+    if (serverTotalAmount > 0) {
+      return serverTotalAmount;
+    }
     return items.fold(0, (sum, item) => sum + item.subtotalAmount);
   }
 

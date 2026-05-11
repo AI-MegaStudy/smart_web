@@ -119,8 +119,10 @@ class PaymentService:
             {
                 "payment_id": payment.payment_id,
                 "payment_status": payment.payment_status,
+                "payment_method": payment.payment_method,
                 "requested_amount": payment.requested_amount,
                 "approved_amount": payment.approved_amount,
+                "approved_at": payment.approved_at,
                 "idempotency_key": payment.idempotency_key,
             }
             for payment in payments

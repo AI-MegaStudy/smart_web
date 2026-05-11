@@ -7,6 +7,8 @@ class ShipmentInfo {
     required this.carrierName,
     required this.trackingNumber,
     required this.shipmentStatusLabel,
+    required this.shippedPackageCount,
+    required this.shippedKg,
     this.shippedAt,
     this.deliveredAt,
   });
@@ -14,6 +16,8 @@ class ShipmentInfo {
   final String carrierName;
   final String trackingNumber;
   final String shipmentStatusLabel;
+  final int shippedPackageCount;
+  final double shippedKg;
   final DateTime? shippedAt;
   final DateTime? deliveredAt;
 
@@ -44,6 +48,8 @@ class ShipmentRepository {
           shipmentStatusLabel: OrderStatusMapper.shipmentLabelOf(
             json['shipment_status']?.toString() ?? '',
           ),
+          shippedPackageCount: _asInt(json['shipped_package_count']),
+          shippedKg: _asDouble(json['shipped_kg']),
           shippedAt: _asDateTime(json['shipped_at']),
           deliveredAt: _asDateTime(json['delivered_at']),
         );
@@ -57,5 +63,25 @@ class ShipmentRepository {
       return null;
     }
     return DateTime.tryParse(raw);
+  }
+
+  static int _asInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static double _asDouble(Object? value) {
+    if (value is double) {
+      return value;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

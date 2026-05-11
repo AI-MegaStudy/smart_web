@@ -112,11 +112,14 @@ class OrderRepository implements OrderRepositoryContract {
         json['order_status']?.toString() ?? '',
       ),
       receiverName: json['receiver_name']?.toString() ?? '',
+      receiverPhone: json['receiver_phone']?.toString() ?? '',
       shippingAddress: json['shipping_address']?.toString() ?? '',
+      deliveryMemo: json['delivery_memo']?.toString() ?? '',
       carrierName: '배송 준비 중',
       trackingNumber: json['tracking_no']?.toString() ?? '',
       orderedAt: _asDateTime(json['ordered_at']),
       paidAt: _asDateTime(json['paid_at']),
+      serverTotalAmount: _asInt(json['total_amount']),
       items: rawItems
           .whereType<Map<String, dynamic>>()
           .map(_orderItemFromJson)
@@ -151,7 +154,7 @@ class OrderRepository implements OrderRepositoryContract {
       return '부사 사과';
     }
     if (displayName == '예약 배') {
-      return '신고 사과';
+      return '양광 사과';
     }
     if (displayName.startsWith('예약 ')) {
       return displayName.replaceFirst('예약 ', '');

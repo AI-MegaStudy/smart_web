@@ -55,6 +55,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _openRepresentativeProduct() {
+    final product = _viewModel.representativeProduct;
+    if (product == null) {
+      Navigator.pushNamed(context, AppRoutes.products);
+      return;
+    }
+
+    Navigator.pushNamed(
+      context,
+      AppRoutes.productDetail,
+      arguments: product.productId,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,8 +100,7 @@ class _HomePageState extends State<HomePage> {
                       child: _HeroSection(
                         onProductsTap: () =>
                             Navigator.pushNamed(context, AppRoutes.products),
-                        onFeaturedTap: () =>
-                            Navigator.pushNamed(context, AppRoutes.products),
+                        onFeaturedTap: _openRepresentativeProduct,
                       ),
                     ),
                   ),
@@ -98,7 +111,7 @@ class _HomePageState extends State<HomePage> {
                     child: _RevealOnLoad(
                       delay: const Duration(milliseconds: 140),
                       child: _SectionHeader(
-                        title: '이번 주 오픈 수확 슬롯',
+                        title: '이번 달 오픈 수확 슬롯',
                         label: '예약 가능한 상품',
                         onTap: () =>
                             Navigator.pushNamed(context, AppRoutes.products),
@@ -631,7 +644,7 @@ class _HeroSection extends StatelessWidget {
                           ),
                           SizedBox(height: 5),
                           Text(
-                            '문경 햇살 농장 신고 사과 수확 예정',
+                            '문경 햇살 농장 양광 사과 수확 예정',
                             style: TextStyle(
                               color: Color(0xCCFFFFFF),
                               fontSize: 12,
@@ -740,7 +753,7 @@ class _HeroImageSliderState extends State<_HeroImageSlider> {
       title: '수확일이 확정된 사과만 예약하세요',
       description: '농가가 확정한 수확 예정 범위와 잔여 수량을 확인합니다.',
       badgeTitle: '10.12-10.18',
-      badgeDescription: '문경 햇살 농장 신고 사과 수확 예정',
+      badgeDescription: '문경 햇살 농장 양광 사과 수확 예정',
     ),
     _HeroSlide(
       imageUrl:
@@ -1437,9 +1450,9 @@ class _VarietySection extends StatelessWidget {
   Widget build(BuildContext context) {
     const varieties = [
       _VarietyInfo(
-        name: '신고',
-        tag: '깔끔한 단맛과 단단한 과육',
-        description: '과육이 단단하고 단맛이 깔끔해 선물용이나 가정용으로 두루 즐기기 좋습니다.',
+        name: '양광',
+        tag: '산뜻한 단맛과 선명한 향',
+        description: '과즙이 풍부하고 산뜻한 단맛이 살아 있어 선물용과 가정용으로 두루 즐기기 좋습니다.',
         color: Color(0xFFE6483D),
       ),
       _VarietyInfo(
@@ -2404,10 +2417,7 @@ class _CleanSupportFooter extends StatelessWidget {
                 runSpacing: 8,
                 alignment: isWide ? WrapAlignment.end : WrapAlignment.start,
                 children: [
-                  _FooterLink(
-                    label: '이용약관',
-                    document: _PolicyDocument.terms,
-                  ),
+                  _FooterLink(label: '이용약관', document: _PolicyDocument.terms),
                   _FooterLink(
                     label: '개인정보처리방침',
                     document: _PolicyDocument.privacy,
@@ -2603,15 +2613,9 @@ class _CleanSupportCard extends StatelessWidget {
 }
 
 class _FooterLink extends StatelessWidget {
-  const _FooterLink({
-    required this.label,
-    this.message,
-    this.supportAction,
-    this.document,
-  });
+  const _FooterLink({required this.label, this.supportAction, this.document});
 
   final String label;
-  final String? message;
   final _SupportAction? supportAction;
   final _PolicyDocument? document;
 
@@ -2632,7 +2636,7 @@ class _FooterLink extends StatelessWidget {
           return;
         }
 
-        showAppAlertDialog(context, message: message ?? '준비 중인 메뉴입니다.');
+        showAppAlertDialog(context, message: '준비 중인 메뉴입니다.');
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2648,10 +2652,7 @@ class _FooterLink extends StatelessWidget {
   }
 }
 
-Future<void> _showPolicyDialog(
-  BuildContext context,
-  _PolicyDocument document,
-) {
+Future<void> _showPolicyDialog(BuildContext context, _PolicyDocument document) {
   final content = _policyContent(document);
   return showDialog<void>(
     context: context,

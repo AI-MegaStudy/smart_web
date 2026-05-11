@@ -455,8 +455,9 @@ class _PaymentInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPaymentPending = payment.paymentStatusLabel == '결제 대기';
-    final displayAmount =
-        isPaymentPending ? payment.requestedAmount : payment.approvedAmount;
+    final displayAmount = isPaymentPending
+        ? payment.requestedAmount
+        : payment.approvedAmount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -527,8 +528,27 @@ class _PaymentInfoRow extends StatelessWidget {
             value: formatPrice(payment.approvedAmount),
           ),
         ],
+        if (payment.approvedAt != null) ...[
+          const SizedBox(height: 8),
+          _SummaryRow(
+            label: '결제 일시',
+            value: _dateTimeLabel(payment.approvedAt),
+          ),
+        ],
       ],
     );
+  }
+
+  String _dateTimeLabel(DateTime? value) {
+    if (value == null) {
+      return '확인 중';
+    }
+    final local = value.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$month.$day $hour:$minute';
   }
 }
 
@@ -572,8 +592,16 @@ class _OrderSummary extends StatelessWidget {
             ],
             const Divider(height: 28),
             _SummaryRow(label: '받는 분', value: order.receiverName),
+            if (order.receiverPhone.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _SummaryRow(label: '연락처', value: order.receiverPhone),
+            ],
             const SizedBox(height: 10),
             _SummaryRow(label: '배송지', value: order.shippingAddress),
+            if (order.deliveryMemo.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _SummaryRow(label: '배송 요청사항', value: order.deliveryMemo),
+            ],
             const SizedBox(height: 10),
             _SummaryRow(label: '결제 금액', value: formatPrice(order.totalAmount)),
             const SizedBox(height: 10),

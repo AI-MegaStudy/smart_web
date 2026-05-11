@@ -24,6 +24,8 @@ class HarvestSlotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customerNotice = _customerNoticeForDisplay(slot.customerNotice);
+
     return Card(
       color: selected ? const Color(0xFFE9F4EC) : Colors.white,
       child: InkWell(
@@ -63,19 +65,32 @@ class HarvestSlotCard extends StatelessWidget {
                   _SlotChip(label: formatPrice(packagePrice)),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                slot.customerNotice,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  height: 1.4,
-                  color: const Color(0xFF5F6C62),
+              if (customerNotice.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  customerNotice,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    height: 1.4,
+                    color: const Color(0xFF5F6C62),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _customerNoticeForDisplay(String notice) {
+    final trimmed = notice.trim();
+    if (RegExp(
+      r'^QA\s*수확\s*슬롯\s*\d*$',
+      caseSensitive: false,
+    ).hasMatch(trimmed)) {
+      return '';
+    }
+    return trimmed;
   }
 }
 

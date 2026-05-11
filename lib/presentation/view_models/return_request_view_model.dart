@@ -65,6 +65,7 @@ class ReturnRequestViewModel extends ChangeNotifier {
     }
     return _evidenceImages.map((image) => image.storageUrl).join(',');
   }
+
   int get maxRequestAmount => _order?.totalAmount ?? 0;
 
   int get requestAmount {
@@ -155,7 +156,7 @@ class ReturnRequestViewModel extends ChangeNotifier {
           return ReturnEvidenceImage(
             fileName: image.fileName,
             previewUrl: image.previewUrl,
-            storageUrl: '/mock/returns/$safeFileName',
+            storageUrl: '/returns/evidence/$safeFileName',
           );
         }),
       );

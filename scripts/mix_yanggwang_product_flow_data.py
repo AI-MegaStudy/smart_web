@@ -15,9 +15,9 @@ from backend.app.models import Farm, HarvestSlot, Product, Reservation
 
 
 BUSAN_PRODUCT_NAME = "충주 햇살 부사 사과"
-SHINGO_PRODUCT_NAME = "충주 햇살 신고 사과"
-SHINGO_PRICE = 34000
-SHINGO_PACKAGE_KG = 5.0
+YANGGWANG_PRODUCT_NAME = "충주 햇살 양광 사과"
+YANGGWANG_PRICE = 34000
+YANGGWANG_PACKAGE_KG = 5.0
 
 
 def get_farm(session) -> Farm:
@@ -26,43 +26,43 @@ def get_farm(session) -> Farm:
         return farm
     farm = session.query(Farm).first()
     if not farm:
-        raise RuntimeError("farm data is required before adding shingo demo data")
+        raise RuntimeError("farm data is required before adding yanggwang demo data")
     return farm
 
 
-def get_or_create_shingo_product(session, farm: Farm) -> Product:
+def get_or_create_yanggwang_product(session, farm: Farm) -> Product:
     product = (
         session.query(Product)
-        .filter(Product.product_name.in_([SHINGO_PRODUCT_NAME, "충주 햇살 신고사과"]))
+        .filter(Product.product_name.in_([YANGGWANG_PRODUCT_NAME, "충주 햇살 신고사과", "충주 햇살 신고 사과"]))
         .one_or_none()
     )
     if product:
-        product.product_name = SHINGO_PRODUCT_NAME
+        product.product_name = YANGGWANG_PRODUCT_NAME
         product.fruit_type = "APPLE"
-        product.variety = "신고"
-        product.package_unit_kg = SHINGO_PACKAGE_KG
-        product.base_price = SHINGO_PRICE
+        product.variety = "양광"
+        product.package_unit_kg = YANGGWANG_PACKAGE_KG
+        product.base_price = YANGGWANG_PRICE
         product.product_status = "ACTIVE"
-        product.product_description = "단단한 과육과 깔끔한 단맛이 좋은 충주 신고 사과입니다."
+        product.product_description = "과즙이 풍부하고 산뜻한 단맛이 좋은 충주 양광 사과입니다."
         return product
 
     product = Product(
         farm_id=farm.farm_id,
-        product_name=SHINGO_PRODUCT_NAME,
+        product_name=YANGGWANG_PRODUCT_NAME,
         fruit_type="APPLE",
-        variety="신고",
-        package_unit_kg=SHINGO_PACKAGE_KG,
-        base_price=SHINGO_PRICE,
+        variety="양광",
+        package_unit_kg=YANGGWANG_PACKAGE_KG,
+        base_price=YANGGWANG_PRICE,
         product_status="ACTIVE",
         image_url="https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a",
-        product_description="단단한 과육과 깔끔한 단맛이 좋은 충주 신고 사과입니다.",
+        product_description="과즙이 풍부하고 산뜻한 단맛이 좋은 충주 양광 사과입니다.",
     )
     session.add(product)
     session.flush()
     return product
 
 
-def get_or_create_shingo_slot(session, farm: Farm, product: Product, source_slot: HarvestSlot, sequence: int) -> HarvestSlot:
+def get_or_create_yanggwang_slot(session, farm: Farm, product: Product, source_slot: HarvestSlot, sequence: int) -> HarvestSlot:
     slot = (
         session.query(HarvestSlot)
         .filter(
@@ -72,8 +72,8 @@ def get_or_create_shingo_slot(session, farm: Farm, product: Product, source_slot
         .one_or_none()
     )
     if slot:
-        slot.confirmed_price = SHINGO_PRICE
-        slot.customer_notice = "농가가 확정한 신고 사과 수확 예정 범위입니다."
+        slot.confirmed_price = YANGGWANG_PRICE
+        slot.customer_notice = "농가가 확정한 양광 사과 수확 예정 범위입니다."
         slot.slot_status = HarvestSlotStatus.OPEN
         return slot
 
@@ -86,8 +86,8 @@ def get_or_create_shingo_slot(session, farm: Farm, product: Product, source_slot
         confirmed_reservable_kg=500.0,
         reserved_kg=0.0,
         sold_kg=0.0,
-        confirmed_price=SHINGO_PRICE,
-        customer_notice=f"농가가 확정한 신고 사과 수확 예정 범위입니다. 순번 {sequence:02d}",
+        confirmed_price=YANGGWANG_PRICE,
+        customer_notice=f"농가가 확정한 양광 사과 수확 예정 범위입니다. 순번 {sequence:02d}",
         slot_status=HarvestSlotStatus.OPEN,
         owner_confirmed_at=source_slot.owner_confirmed_at,
         opened_at=source_slot.opened_at,
@@ -147,7 +147,7 @@ def recalculate_money(session, reservation: Reservation) -> None:
         order.shipment.shipped_kg = round(sum(float(item.ordered_kg) for item in order.order_items), 2)
 
 
-def mix_shingo_into_existing_flow(session, farm: Farm, product: Product) -> int:
+def mix_yanggwang_into_existing_flow(session, farm: Farm, product: Product) -> int:
     changed = 0
     reservations = (
         session.query(Reservation)
@@ -163,15 +163,15 @@ def mix_shingo_into_existing_flow(session, farm: Farm, product: Product) -> int:
             source_slot = item.slot
             if not source_slot:
                 continue
-            shingo_slot = get_or_create_shingo_slot(session, farm, product, source_slot, index)
+            yanggwang_slot = get_or_create_yanggwang_slot(session, farm, product, source_slot, index)
             if source_slot.product_id != product.product_id:
                 source_slot.reserved_kg = max(0.0, round(float(source_slot.reserved_kg) - float(item.reserved_kg), 2))
                 source_slot.sold_kg = max(0.0, round(float(source_slot.sold_kg) - float(item.reserved_kg), 2))
-                item.slot_id = shingo_slot.slot_id
-                item.unit_price_snapshot = SHINGO_PRICE
-                shingo_slot.reserved_kg = round(float(shingo_slot.reserved_kg) + float(item.reserved_kg), 2)
+                item.slot_id = yanggwang_slot.slot_id
+                item.unit_price_snapshot = YANGGWANG_PRICE
+                yanggwang_slot.reserved_kg = round(float(yanggwang_slot.reserved_kg) + float(item.reserved_kg), 2)
                 if reservation.order:
-                    shingo_slot.sold_kg = round(float(shingo_slot.sold_kg) + float(item.reserved_kg), 2)
+                    yanggwang_slot.sold_kg = round(float(yanggwang_slot.sold_kg) + float(item.reserved_kg), 2)
             changed += 1
         session.flush()
         recalculate_money(session, reservation)
@@ -182,8 +182,8 @@ def main() -> None:
     session = SessionLocal()
     try:
         farm = get_farm(session)
-        product = get_or_create_shingo_product(session, farm)
-        changed = mix_shingo_into_existing_flow(session, farm, product)
+        product = get_or_create_yanggwang_product(session, farm)
+        changed = mix_yanggwang_into_existing_flow(session, farm, product)
         session.commit()
     except Exception:
         session.rollback()

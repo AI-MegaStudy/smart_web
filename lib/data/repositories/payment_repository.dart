@@ -23,12 +23,14 @@ class PaymentHistoryItem {
     required this.paymentMethodLabel,
     required this.requestedAmount,
     required this.approvedAmount,
+    this.approvedAt,
   });
 
   final String paymentStatusLabel;
   final String paymentMethodLabel;
   final int requestedAmount;
   final int approvedAmount;
+  final DateTime? approvedAt;
 }
 
 class PaymentRepository {
@@ -59,6 +61,7 @@ class PaymentRepository {
                 ),
                 requestedAmount: _asInt(json['requested_amount']),
                 approvedAmount: _asInt(json['approved_amount']),
+                approvedAt: _asDateTime(json['approved_at']),
               );
             })
             .toList(growable: false);
@@ -95,6 +98,14 @@ class PaymentRepository {
       return value.toInt();
     }
     return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static DateTime? _asDateTime(Object? value) {
+    final raw = value?.toString();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(raw);
   }
 
   static String _statusLabel(String status) {
