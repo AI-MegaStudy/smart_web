@@ -88,7 +88,7 @@ class ProductApiRepository implements ProductRepositoryContract {
       farmName: _farmString(json, 'farm_name', fallback: '농장 정보 확인 중'),
       farmRegion: _farmString(json, 'farm_region'),
       farmAddress: _farmString(json, 'farm_address'),
-      farmImageUrl: _farmString(json, 'farm_image_url'),
+      farmImageUrl: _mediaUrl(_farmString(json, 'farm_image_url')),
       farmDescription: _farmString(json, 'farm_description'),
       deliveryPolicy: _farmString(json, 'delivery_policy'),
       returnPolicy: _farmString(json, 'return_policy'),
@@ -186,7 +186,24 @@ class ProductApiRepository implements ProductRepositoryContract {
     if (url == null || url.isEmpty) {
       return 'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?auto=format&fit=crop&w=900&q=80';
     }
-    return url;
+    return _mediaUrl(url);
+  }
+
+  String _mediaUrl(String value) {
+    if (value.isEmpty) {
+      return value;
+    }
+
+    final uri = Uri.tryParse(value);
+    if (uri == null || !uri.hasScheme) {
+      return value;
+    }
+
+    if (uri.host == 'cheng80.myqnapcloud.com') {
+      return ApiClient.buildPublicImageProxyUrl(value);
+    }
+
+    return value;
   }
 
   Object? _farmValue(Map<String, dynamic> json, String key) {

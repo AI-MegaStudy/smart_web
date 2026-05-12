@@ -18,6 +18,12 @@ class ApiClient {
     defaultValue: 'http://localhost:8000/api/v1',
   );
 
+  static String buildPublicImageProxyUrl(String imageUrl) {
+    final normalizedBaseUrl = _normalizeBaseUrl(defaultBaseUrl);
+    final proxyUri = Uri.parse('$normalizedBaseUrl/public-images/proxy');
+    return proxyUri.replace(queryParameters: {'url': imageUrl}).toString();
+  }
+
   final http.Client _httpClient;
   final String _baseUrl;
   final Future<String?> Function()? _accessTokenProvider;
