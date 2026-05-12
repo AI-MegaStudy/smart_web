@@ -280,17 +280,19 @@ class _DetailHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  Container(
+                  Column(
                     key: CustomerDemoTargetKeys.productDetailPackageSelector,
-                    child: Text(
-                      '패키지 단위 선택',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '패키지 단위 선택',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
                       ),
-                    ),
+                      const SizedBox(height: 18),
+                      _PackageChoiceGrid(viewModel: viewModel),
+                    ],
                   ),
-                  const SizedBox(height: 18),
-                  _PackageChoiceGrid(viewModel: viewModel),
                   const SizedBox(height: 14),
                   Row(
                     children: [

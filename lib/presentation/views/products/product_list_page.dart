@@ -164,13 +164,17 @@ class _ProductGrid extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final product = products[index];
-            return ProductCard(
-              key: index == 0 ? CustomerDemoTargetKeys.productListFirstCard : null,
-              product: product,
-              onTap: () => Navigator.pushNamed(
-                context,
-                AppRoutes.productDetail,
-                arguments: product.productId,
+            return SizedBox(
+              key: index == 0
+                  ? CustomerDemoTargetKeys.productListFirstCard
+                  : null,
+              child: ProductCard(
+                product: product,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.productDetail,
+                  arguments: product.productId,
+                ),
               ),
             );
           },

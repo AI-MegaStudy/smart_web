@@ -37,6 +37,7 @@ class CustomerCoachTourManager {
   TutorialCoachMark? _coachMark;
   final LocalBasketRepository _localBasketRepository = LocalBasketRepository();
   CustomerCoachTourStage? _activeStage;
+  CustomerCoachTourStage? _visibleStage;
   bool _isRunning = false;
   bool _isDemoMode = false;
 
@@ -91,6 +92,7 @@ class CustomerCoachTourManager {
       curve: Curves.easeOutCubic,
       alignment: 0.14,
     );
+    await Future<void>.delayed(const Duration(milliseconds: 120));
 
     if (!_isRunning || _activeStage != stage) {
       return;
@@ -115,6 +117,7 @@ class CustomerCoachTourManager {
     _coachMark?.removeOverlayEntry();
     _coachMark = null;
     _activeStage = null;
+    _visibleStage = null;
     _isRunning = false;
   }
 
@@ -206,6 +209,7 @@ class CustomerCoachTourManager {
         title: '상품 목록',
         description: '예약 가능한 상품과 수확 예정 범위를 확인하고, 원하는 상품 상세로 이동하는 단계입니다.',
         align: ContentAlign.bottom,
+        paddingFocus: 2,
       ),
       CustomerCoachTourStage.productDetailPackage => _buildTarget(
         id: 'customer.product.detail.package',
@@ -292,6 +296,7 @@ class CustomerCoachTourManager {
     required String description,
     ContentAlign align = ContentAlign.bottom,
     CustomTargetContentPosition? customPosition,
+    double? paddingFocus,
   }) {
     if (key.currentContext == null) {
       return null;
@@ -302,7 +307,8 @@ class CustomerCoachTourManager {
       keyTarget: key,
       shape: ShapeLightFocus.RRect,
       radius: 14,
-      enableOverlayTab: false,
+      paddingFocus: paddingFocus,
+      enableOverlayTab: true,
       contents: [
         TargetContent(
           align: align,
@@ -338,10 +344,15 @@ class CustomerCoachTourManager {
   }
 
   void _showStage(CustomerCoachTourStage stage, TargetFocus target) {
+    if (_visibleStage == stage && _coachMark != null) {
+      return;
+    }
+
     _coachMark?.removeOverlayEntry();
+    _visibleStage = stage;
     _coachMark = TutorialCoachMark(
       targets: [target],
-      colorShadow: const Color(0xFF163B2B),
+      colorShadow: const Color(0xFF2B2723),
       opacityShadow: 0.18,
       paddingFocus: 14,
       hideSkip: true,
@@ -359,6 +370,8 @@ class CustomerCoachTourManager {
   }
 
   void _handleStageFinished(CustomerCoachTourStage stage) {
+    _visibleStage = null;
+
     switch (stage) {
       case CustomerCoachTourStage.signup:
         _activeStage = CustomerCoachTourStage.verifyEmail;
@@ -481,14 +494,14 @@ class _CoachTourBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bubbleMaxWidth =
-        (MediaQuery.sizeOf(context).width - 48).clamp(240.0, 420.0).toDouble();
+        (MediaQuery.sizeOf(context).width - 48).clamp(300.0, 500.0).toDouble();
 
     return UnconstrainedBox(
       constrainedAxis: Axis.vertical,
       child: SizedBox(
         width: bubbleMaxWidth,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -507,21 +520,23 @@ class _CoachTourBubble extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 25,
                   fontWeight: FontWeight.w900,
                   color: const Color(0xFF163B2B),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 description,
                 softWrap: true,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 19,
                   color: const Color(0xFF4B584D),
                   height: 1.48,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
