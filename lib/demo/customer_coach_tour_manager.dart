@@ -2,7 +2,6 @@
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../app/router.dart';
-import '../data/models/local_basket_item_model.dart';
 import '../data/repositories/local_basket_repository.dart';
 import '../presentation/view_models/auth_view_model.dart';
 import 'customer_demo_route_defaults.dart';
@@ -198,7 +197,8 @@ class CustomerCoachTourManager {
         key: CustomerDemoTargetKeys.homeQuickNav,
         title: '홈 빠른 이동 메뉴',
         description: '상품, 품종, 보관, 농촌, FAQ 섹션으로 빠르게 이동하며 홈 전체 구성을 소개하는 화면입니다.',
-        align: ContentAlign.bottom,
+        align: ContentAlign.custom,
+        customPosition: _homeQuickNavBubblePosition(),
       ),
       CustomerCoachTourStage.productList => _buildTarget(
         id: 'customer.product.list',
@@ -291,6 +291,7 @@ class CustomerCoachTourManager {
     required String title,
     required String description,
     ContentAlign align = ContentAlign.bottom,
+    CustomTargetContentPosition? customPosition,
   }) {
     if (key.currentContext == null) {
       return null;
@@ -305,6 +306,7 @@ class CustomerCoachTourManager {
       contents: [
         TargetContent(
           align: align,
+          customPosition: customPosition,
           builder: (context, controller) {
             return _CoachTourBubble(
               title: title,
@@ -320,6 +322,19 @@ class CustomerCoachTourManager {
         ),
       ],
     );
+  }
+
+  CustomTargetContentPosition _homeQuickNavBubblePosition() {
+    final context = AppRoutes.navigatorKey.currentContext;
+    if (context == null) {
+      return CustomTargetContentPosition(top: 420, right: 120);
+    }
+
+    final screenSize = MediaQuery.sizeOf(context);
+    final top = (screenSize.height * 0.56).clamp(360.0, 520.0).toDouble();
+    final right = screenSize.width < 700 ? 24.0 : 120.0;
+
+    return CustomTargetContentPosition(top: top, right: right);
   }
 
   void _showStage(CustomerCoachTourStage stage, TargetFocus target) {
@@ -433,7 +448,9 @@ class CustomerCoachTourManager {
       Future<void>.delayed(const Duration(milliseconds: 800), () {
         final mountedContext = AppRoutes.navigatorKey.currentContext;
         final activeStage = _activeStage;
-        if (mountedContext == null || activeStage == null) {
+        if (mountedContext == null ||
+            !mountedContext.mounted ||
+            activeStage == null) {
           return;
         }
         onPageReady(activeStage, mountedContext);
@@ -464,11 +481,12 @@ class _CoachTourBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bubbleMaxWidth =
-        (MediaQuery.sizeOf(context).width - 56).clamp(220.0, 360.0).toDouble();
+        (MediaQuery.sizeOf(context).width - 48).clamp(240.0, 420.0).toDouble();
 
-    return IntrinsicWidth(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
+    return UnconstrainedBox(
+      constrainedAxis: Axis.vertical,
+      child: SizedBox(
+        width: bubbleMaxWidth,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(

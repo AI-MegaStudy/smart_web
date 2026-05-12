@@ -105,11 +105,32 @@ class CheckoutViewModel extends ChangeNotifier {
 
     if (CustomerCoachTourManager.instance.isDemoMode) {
       _items = CustomerDemoSeedData.demoBasketItems;
+      _addressOptions = const [
+        CheckoutAddressOption(
+          id: 1,
+          label: '기본 배송지',
+          receiverName: '김민수',
+          receiverPhone: '010-1111-2222',
+          address: '서울특별시 강남구 테헤란로 152 9층',
+          memo: '배송 전 연락주세요',
+          isDefault: true,
+        ),
+        CheckoutAddressOption(
+          id: 2,
+          label: '문경집',
+          receiverName: '김민수',
+          receiverPhone: '010-1234-5678',
+          address: '경상북도 문경시 데모길 12',
+          memo: '문 앞에 놓아주세요',
+          isRecent: true,
+        ),
+      ];
+      selectedAddressId = 2;
+      useDefaultAddress = false;
       receiverName = '김민수';
       receiverPhone = '010-1234-5678';
       shippingAddress = '경상북도 문경시 데모길 12';
       deliveryMemo = '문 앞에 놓아주세요';
-      _addressOptions = const [];
       _isLoading = false;
       notifyListeners();
       return;
