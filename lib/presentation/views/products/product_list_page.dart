@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/product_list_view_model.dart';
 import '../../widgets/empty_state_panel.dart';
 import '../../widgets/notice_box.dart';
@@ -21,6 +23,12 @@ class _ProductListPageState extends State<ProductListPage> {
   void initState() {
     super.initState();
     _viewModel = ProductListViewModel()..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.productList,
+        context,
+      );
+    });
   }
 
   @override
@@ -157,6 +165,7 @@ class _ProductGrid extends StatelessWidget {
           itemBuilder: (context, index) {
             final product = products[index];
             return ProductCard(
+              key: index == 0 ? CustomerDemoTargetKeys.productListFirstCard : null,
               product: product,
               onTap: () => Navigator.pushNamed(
                 context,

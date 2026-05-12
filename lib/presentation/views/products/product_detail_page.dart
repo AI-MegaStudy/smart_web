@@ -5,6 +5,8 @@ import '../../../app/router.dart';
 import '../../../core/session/mock_auth_session.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/product_model.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/product_detail_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
@@ -29,6 +31,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   void initState() {
     super.initState();
     _viewModel = ProductDetailViewModel(productId: widget.productId)..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.productDetailPackage,
+        context,
+      );
+    });
   }
 
   @override
@@ -272,10 +280,13 @@ class _DetailHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  Text(
-                    '패키지 단위 선택',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
+                  Container(
+                    key: CustomerDemoTargetKeys.productDetailPackageSelector,
+                    child: Text(
+                      '패키지 단위 선택',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -294,10 +305,13 @@ class _DetailHero extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 22),
-                  Text(
-                    '수확 슬롯 선택',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
+                  Container(
+                    key: CustomerDemoTargetKeys.productDetailSlotSelector,
+                    child: Text(
+                      '수확 슬롯 선택',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -331,6 +345,7 @@ class _DetailHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   FilledButton.icon(
+                    key: CustomerDemoTargetKeys.productDetailAddToBasket,
                     onPressed: () async {
                       if (!MockAuthSession.isLoggedIn) {
                         await showAppAlertDialog(

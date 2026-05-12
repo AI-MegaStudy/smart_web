@@ -3,6 +3,8 @@ import 'package:kpostal_plus/kpostal_plus.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/checkout_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
@@ -26,6 +28,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void initState() {
     super.initState();
     _viewModel = CheckoutViewModel(reservationId: widget.reservationId)..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.checkout,
+        context,
+      );
+    });
   }
 
   @override
@@ -378,6 +389,7 @@ class _CheckoutSummary extends StatelessWidget {
             _DeliverySummary(viewModel: viewModel),
             const SizedBox(height: 18),
             FilledButton.icon(
+              key: CustomerDemoTargetKeys.checkoutPrimaryAction,
               onPressed: viewModel.isSubmitting
                   ? null
                   : () async {

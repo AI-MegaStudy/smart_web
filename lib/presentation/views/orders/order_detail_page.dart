@@ -7,6 +7,8 @@ import '../../../data/models/local_basket_item_model.dart';
 import '../../../data/models/order_model.dart';
 import '../../../data/repositories/payment_repository.dart';
 import '../../../data/repositories/shipment_repository.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/order_detail_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
 import '../../widgets/flow_status_badge.dart';
@@ -29,6 +31,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   void initState() {
     super.initState();
     _viewModel = OrderDetailViewModel(orderId: widget.orderId)..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.orderDetail,
+        context,
+      );
+    });
   }
 
   @override
@@ -82,9 +90,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           final progress = Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _ProgressPanel(
-                                order: order,
-                                shipment: _viewModel.shipment,
+                              KeyedSubtree(
+                                key: CustomerDemoTargetKeys.orderTimeline,
+                                child: _ProgressPanel(
+                                  order: order,
+                                  shipment: _viewModel.shipment,
+                                ),
                               ),
                               const SizedBox(height: 18),
                               _PaymentInfoPanel(

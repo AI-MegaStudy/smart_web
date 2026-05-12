@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import 'login_page.dart';
@@ -14,17 +18,44 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   late final AuthViewModel _viewModel;
+  Timer? _coachTourTapResetTimer;
+  int _coachTourTapCount = 0;
 
   @override
   void initState() {
     super.initState();
     _viewModel = AuthViewModel();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.signup,
+        context,
+      );
+    });
   }
 
   @override
   void dispose() {
+    _coachTourTapResetTimer?.cancel();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _handleCoachTourTriggerTap() {
+    _coachTourTapCount += 1;
+    _coachTourTapResetTimer?.cancel();
+    _coachTourTapResetTimer = Timer(const Duration(milliseconds: 900), () {
+      _coachTourTapCount = 0;
+    });
+
+    if (_coachTourTapCount < 3) {
+      return;
+    }
+
+    _coachTourTapCount = 0;
+    CustomerCoachTourManager.instance.startFromSignup(context);
   }
 
   Future<void> _submit() async {
@@ -59,7 +90,7 @@ class _SignupPageState extends State<SignupPage> {
         automaticallyImplyLeading: false,
         toolbarHeight: 72,
         titleSpacing: 14,
-        title: const AuthBrandTitle(),
+        title: AuthBrandTitle(onTap: _handleCoachTourTriggerTap),
       ),
       body: AuthSplitLayout(
         imageUrl:
@@ -142,6 +173,7 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     const SizedBox(width: 10),
                     FilledButton(
+                      key: CustomerDemoTargetKeys.signupPrimaryAction,
                       onPressed: _viewModel.canSignup ? _submit : null,
                       child: Text(_viewModel.isSubmitting ? '가입 중' : '가입하기'),
                     ),

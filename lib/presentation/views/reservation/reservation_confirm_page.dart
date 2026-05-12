@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/reservation_confirm_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
@@ -26,6 +28,15 @@ class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
   void initState() {
     super.initState();
     _viewModel = ReservationConfirmViewModel()..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.reservationConfirm,
+        context,
+      );
+    });
   }
 
   @override
@@ -76,7 +87,9 @@ class _ReservationConfirmPageState extends State<ReservationConfirmPage> {
               );
             }
 
-            if (_viewModel.hasBlockingIssue && !_hasShownAvailabilityAlert) {
+            if (_viewModel.hasBlockingIssue &&
+                !CustomerCoachTourManager.instance.isDemoMode &&
+                !_hasShownAvailabilityAlert) {
               _hasShownAvailabilityAlert = true;
               WidgetsBinding.instance.addPostFrameCallback((_) async {
                 if (!mounted) {
@@ -409,6 +422,7 @@ class _ReservationSummary extends StatelessWidget {
             ],
             const SizedBox(height: 18),
             FilledButton.icon(
+              key: CustomerDemoTargetKeys.reservationConfirmPrimaryAction,
               onPressed: viewModel.hasBlockingIssue || viewModel.isSubmitting
                   ? null
                   : () async {

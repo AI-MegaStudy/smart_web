@@ -5,6 +5,8 @@ import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 import '../../data/repositories/shipment_repository.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_order_data.dart';
 
 class OrderDetailViewModel extends ChangeNotifier {
   OrderDetailViewModel({
@@ -41,6 +43,18 @@ class OrderDetailViewModel extends ChangeNotifier {
   Future<void> load() async {
     _isLoading = true;
     notifyListeners();
+
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _paymentErrorMessage = null;
+      _order =
+          CustomerDemoOrderData.orderById(_orderId) ??
+          CustomerDemoOrderData.orders().first;
+      _payments = CustomerDemoOrderData.paymentsForOrder(_order!.orderId);
+      _shipment = CustomerDemoOrderData.shipmentForOrder(_order!.orderId);
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     _paymentErrorMessage = null;
     _order = await _orderRepository.fetchOrderDetail(_orderId);

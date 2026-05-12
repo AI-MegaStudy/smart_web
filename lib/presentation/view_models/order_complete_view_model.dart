@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../../data/models/order_model.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_order_data.dart';
 
 class OrderCompleteViewModel extends ChangeNotifier {
   OrderCompleteViewModel({
@@ -37,6 +39,15 @@ class OrderCompleteViewModel extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _order =
+          CustomerDemoOrderData.orderById(orderId) ??
+          CustomerDemoOrderData.orders().first;
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     try {
       _order = await _orderRepository.fetchOrderDetail(orderId);

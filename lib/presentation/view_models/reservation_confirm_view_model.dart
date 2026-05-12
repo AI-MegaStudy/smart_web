@@ -5,6 +5,9 @@ import '../../data/models/local_basket_item_model.dart';
 import '../../data/repositories/local_basket_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 import '../../data/repositories/reservation_repository.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_route_defaults.dart';
+import '../../demo/customer_demo_seed_data.dart';
 
 class ReservationConfirmViewModel extends ChangeNotifier {
   ReservationConfirmViewModel({
@@ -55,6 +58,16 @@ class ReservationConfirmViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _items = CustomerDemoSeedData.demoBasketItems;
+      _itemIssues = const {};
+      _preview = null;
+      _previewErrorMessage = null;
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
       _items = await _localBasketRepository.fetchItems();
       await _loadPreview();
@@ -70,6 +83,17 @@ class ReservationConfirmViewModel extends ChangeNotifier {
   }
 
   Future<int?> createReservation() async {
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      ReservationCheckoutCache.save(
+        CustomerDemoRouteDefaults.checkoutReservationId,
+        CustomerDemoSeedData.demoBasketItems,
+      );
+      _localBasketRepository.replaceItems(const []);
+      _items = const [];
+      notifyListeners();
+      return CustomerDemoRouteDefaults.checkoutReservationId;
+    }
+
     if (_items.isEmpty || hasBlockingIssue || _isSubmitting) {
       return null;
     }

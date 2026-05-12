@@ -25,6 +25,7 @@ import '../presentation/views/auth/login_page.dart';
 import '../presentation/view_models/auth_view_model.dart';
 
 class AppRoutes {
+  static final navigatorKey = GlobalKey<NavigatorState>();
   static const home = '/';
   static const products = '/products';
   static const productDetail = '/products/detail';

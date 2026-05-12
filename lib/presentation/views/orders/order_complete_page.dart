@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/order_complete_view_model.dart';
 import '../../widgets/brand_app_bar_title.dart';
 import '../../widgets/flow_status_badge.dart';
@@ -24,6 +26,15 @@ class _OrderCompletePageState extends State<OrderCompletePage> {
   void initState() {
     super.initState();
     _viewModel = OrderCompleteViewModel(orderId: widget.orderId)..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.orderComplete,
+        context,
+      );
+    });
   }
 
   @override
@@ -192,6 +203,7 @@ class _CompleteCard extends StatelessWidget {
                   label: const Text('홈으로'),
                 ),
                 FilledButton.icon(
+                  key: CustomerDemoTargetKeys.orderCompletePrimaryAction,
                   onPressed: () => Navigator.pushNamed(
                     context,
                     AppRoutes.orderDetail,

@@ -7,6 +7,9 @@ import '../../data/repositories/local_basket_repository.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 import '../../data/repositories/reservation_repository.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_route_defaults.dart';
+import '../../demo/customer_demo_seed_data.dart';
 
 class CheckoutAddressOption {
   const CheckoutAddressOption({
@@ -100,6 +103,18 @@ class CheckoutViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _items = CustomerDemoSeedData.demoBasketItems;
+      receiverName = '김민수';
+      receiverPhone = '010-1234-5678';
+      shippingAddress = '경상북도 문경시 데모길 12';
+      deliveryMemo = '문 앞에 놓아주세요';
+      _addressOptions = const [];
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
       final reservationItems = ReservationCheckoutCache.itemsFor(reservationId);
       _items = reservationItems.isNotEmpty
@@ -130,6 +145,14 @@ class CheckoutViewModel extends ChangeNotifier {
   }
 
   Future<int?> createOrder() async {
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      OrderPaymentCache.save(
+        CustomerDemoRouteDefaults.paymentOrderId,
+        CustomerDemoSeedData.demoBasketItems,
+      );
+      return CustomerDemoRouteDefaults.paymentOrderId;
+    }
+
     if (!canSubmit || _isSubmitting) {
       _errorMessage = '받는 분, 연락처, 배송지를 모두 입력해주세요.';
       notifyListeners();

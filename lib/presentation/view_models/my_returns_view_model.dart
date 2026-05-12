@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_exception.dart';
 import '../../data/repositories/return_repository.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_return_data.dart';
 
 class MyReturnsViewModel extends ChangeNotifier {
   MyReturnsViewModel({ReturnRepository? returnRepository})
@@ -17,6 +19,13 @@ class MyReturnsViewModel extends ChangeNotifier {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
+
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      returns = CustomerDemoReturnData.items();
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     try {
       returns = await _returnRepository.fetchMyReturns();

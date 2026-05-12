@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../../data/models/order_model.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_order_data.dart';
 
 class MyOrdersViewModel extends ChangeNotifier {
   MyOrdersViewModel({OrderRepositoryContract? orderRepository})
@@ -22,6 +24,13 @@ class MyOrdersViewModel extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _orders = CustomerDemoOrderData.orders();
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     try {
       _orders = await _orderRepository.fetchOrders();

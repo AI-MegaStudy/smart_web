@@ -4,6 +4,8 @@ import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/image_file_picker.dart';
 import '../../../data/models/local_basket_item_model.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/return_request_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
@@ -25,6 +27,15 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
   void initState() {
     super.initState();
     _viewModel = ReturnRequestViewModel(orderId: widget.orderId)..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.returnRequest,
+        context,
+      );
+    });
   }
 
   @override
@@ -740,6 +751,7 @@ class _ReturnSummary extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
+                  key: CustomerDemoTargetKeys.returnRequestPrimaryAction,
                   onPressed: viewModel.isSubmitting
                       ? null
                       : () async {

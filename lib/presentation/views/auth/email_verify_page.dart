@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import 'login_page.dart';
@@ -25,6 +27,15 @@ class _EmailVerifyPageState extends State<EmailVerifyPage> {
       initialEmail: widget.email,
       signupDraft: widget.signupDraft,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.verifyEmail,
+        context,
+      );
+    });
     if (widget.signupDraft?.emailAlreadySent != true) {
       _viewModel.sendCode();
     }
@@ -117,6 +128,7 @@ class _EmailVerifyPageState extends State<EmailVerifyPage> {
                     ),
                     const SizedBox(width: 10),
                     FilledButton(
+                      key: CustomerDemoTargetKeys.verifyEmailPrimaryAction,
                       onPressed: _viewModel.isVerifying
                           ? null
                           : () async {

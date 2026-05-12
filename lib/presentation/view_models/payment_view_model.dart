@@ -6,6 +6,8 @@ import '../../data/repositories/local_basket_repository.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_seed_data.dart';
 
 class PaymentViewModel extends ChangeNotifier {
   PaymentViewModel({
@@ -38,6 +40,16 @@ class PaymentViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _items = OrderPaymentCache.itemsFor(orderId);
+      if (_items.isEmpty) {
+        _items = CustomerDemoSeedData.demoBasketItems;
+      }
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
       final orderItems = OrderPaymentCache.itemsFor(orderId);
       _items = orderItems.isNotEmpty
@@ -52,6 +64,11 @@ class PaymentViewModel extends ChangeNotifier {
   }
 
   Future<bool> approvePayment() async {
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _localBasketRepository.replaceItems(const []);
+      return true;
+    }
+
     if (_isSubmitting) {
       return false;
     }

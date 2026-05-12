@@ -18,6 +18,7 @@ class HarvestSlotApp extends StatelessWidget {
           title: 'Harvest Slot',
           debugShowCheckedModeBanner: false,
           theme: buildHarvestTheme(),
+          navigatorKey: AppRoutes.navigatorKey,
           initialRoute: AppRoutes.home,
           onGenerateRoute: AppRoutes.onGenerateRoute,
         );

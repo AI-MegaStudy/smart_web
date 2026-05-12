@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../app/router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/payment_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
@@ -28,6 +30,15 @@ class _MockPaymentPageState extends State<MockPaymentPage> {
   void initState() {
     super.initState();
     _viewModel = PaymentViewModel(orderId: widget.orderId)..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.payment,
+        context,
+      );
+    });
   }
 
   @override
@@ -389,16 +400,24 @@ class _PaymentSummary extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              '결제 수단',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 14),
-            _PaymentMethodSelector(
-              selectedPaymentMethod: selectedPaymentMethod,
-              onChanged: onPaymentMethodChanged,
+            Container(
+              key: CustomerDemoTargetKeys.paymentMethodSelector,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '결제 수단',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 14),
+                  _PaymentMethodSelector(
+                    selectedPaymentMethod: selectedPaymentMethod,
+                    onChanged: onPaymentMethodChanged,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 22),
             Text(
@@ -430,6 +449,7 @@ class _PaymentSummary extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             FilledButton.icon(
+              key: CustomerDemoTargetKeys.paymentPrimaryAction,
               onPressed: viewModel.isSubmitting ? null : onPay,
               icon: Icon(
                 viewModel.isSubmitting

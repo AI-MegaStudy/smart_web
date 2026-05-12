@@ -6,6 +6,8 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 import '../../../app/router.dart';
 import '../../../core/session/mock_auth_session.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/home_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/notice_box.dart';
@@ -22,20 +24,34 @@ class _HomePageState extends State<HomePage> {
   late final HomeViewModel _viewModel;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _topKey = GlobalKey();
-  final GlobalKey _productsKey = GlobalKey();
+  final GlobalKey _productsButtonKey =
+      CustomerDemoTargetKeys.homeProductsButton;
+  final GlobalKey _featuredButtonKey =
+      CustomerDemoTargetKeys.homeFeaturedButton;
+  final GlobalKey _quickNavKey = CustomerDemoTargetKeys.homeQuickNav;
+  final GlobalKey _productsKey = CustomerDemoTargetKeys.homeProducts;
   final GlobalKey _varietyKey = GlobalKey();
   final GlobalKey _storageKey = GlobalKey();
   final GlobalKey _processKey = GlobalKey();
   final GlobalKey _faqKey = GlobalKey();
+  Timer? _coachTourTapResetTimer;
+  int _coachTourTapCount = 0;
 
   @override
   void initState() {
     super.initState();
     _viewModel = HomeViewModel()..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.homeProductsCta,
+        context,
+      );
+    });
   }
 
   @override
   void dispose() {
+    _coachTourTapResetTimer?.cancel();
     _scrollController.dispose();
     _viewModel.dispose();
     super.dispose();
@@ -69,13 +85,31 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _handleCoachTourTriggerTap() {
+    _coachTourTapCount += 1;
+    _coachTourTapResetTimer?.cancel();
+    _coachTourTapResetTimer = Timer(const Duration(milliseconds: 900), () {
+      _coachTourTapCount = 0;
+    });
+
+    if (_coachTourTapCount < 3) {
+      return;
+    }
+
+    _coachTourTapCount = 0;
+    CustomerCoachTourManager.instance.startFromHome(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 72,
         titleSpacing: 16,
-        title: const SizedBox(height: 72, child: _HomeTopBar()),
+        title: SizedBox(
+          height: 72,
+          child: const _HomeTopBar(),
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -98,6 +132,9 @@ class _HomePageState extends State<HomePage> {
                     child: _RevealOnLoad(
                       delay: Duration.zero,
                       child: _HeroSection(
+                        onCoachTourTriggerTap: _handleCoachTourTriggerTap,
+                        productsButtonKey: _productsButtonKey,
+                        featuredButtonKey: _featuredButtonKey,
                         onProductsTap: () =>
                             Navigator.pushNamed(context, AppRoutes.products),
                         onFeaturedTap: _openRepresentativeProduct,
@@ -247,6 +284,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       floatingActionButton: _HomeQuickNav(
+        key: _quickNavKey,
         onTopTap: () => _scrollTo(_topKey),
         onProductsTap: () => _scrollTo(_productsKey),
         onVarietyTap: () => _scrollTo(_varietyKey),
@@ -302,6 +340,7 @@ class _ResponsiveQuickNavLocation extends FloatingActionButtonLocation {
 
 class _HomeQuickNav extends StatelessWidget {
   const _HomeQuickNav({
+    super.key,
     required this.onTopTap,
     required this.onProductsTap,
     required this.onVarietyTap,
@@ -524,10 +563,16 @@ class _RevealOnLoadState extends State<_RevealOnLoad> {
 
 class _HeroSection extends StatelessWidget {
   const _HeroSection({
+    required this.onCoachTourTriggerTap,
+    required this.productsButtonKey,
+    required this.featuredButtonKey,
     required this.onProductsTap,
     required this.onFeaturedTap,
   });
 
+  final VoidCallback onCoachTourTriggerTap;
+  final GlobalKey productsButtonKey;
+  final GlobalKey featuredButtonKey;
   final VoidCallback onProductsTap;
   final VoidCallback onFeaturedTap;
 
@@ -557,9 +602,10 @@ class _HeroSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const _Label(
+                    _Label(
                       icon: Icons.event_available,
                       text: '농가 확정 수확 슬롯 예약',
+                      onTap: onCoachTourTriggerTap,
                     ),
                     SizedBox(height: isWide ? 10 : 8),
                     Text(
@@ -585,11 +631,13 @@ class _HeroSection extends StatelessWidget {
                       runSpacing: 10,
                       children: [
                         FilledButton.icon(
+                          key: productsButtonKey,
                           onPressed: onProductsTap,
                           icon: const Icon(Icons.inventory_2_outlined),
                           label: const Text('예약 상품 보기'),
                         ),
                         OutlinedButton.icon(
+                          key: featuredButtonKey,
                           onPressed: onFeaturedTap,
                           icon: const Icon(Icons.spa_outlined),
                           label: const Text('대표 상품'),
@@ -2909,26 +2957,34 @@ class _SupportCard extends StatelessWidget {
 }
 
 class _Label extends StatelessWidget {
-  const _Label({required this.icon, required this.text});
+  const _Label({required this.icon, required this.text, this.onTap});
 
   final IconData icon;
   final String text;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w800,
-          ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

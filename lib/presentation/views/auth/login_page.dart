@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 
@@ -18,6 +20,15 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _viewModel = LoginViewModel();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.login,
+        context,
+      );
+    });
   }
 
   @override
@@ -96,6 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(width: 10),
                     FilledButton(
+                      key: CustomerDemoTargetKeys.loginPrimaryAction,
                       onPressed: _viewModel.canLogin ? _submit : null,
                       child: Text(_viewModel.isSubmitting ? '확인 중' : '로그인'),
                     ),
@@ -111,17 +123,20 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 class AuthBrandTitle extends StatelessWidget {
-  const AuthBrandTitle({super.key});
+  const AuthBrandTitle({super.key, this.onTap});
+
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: () => Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.home,
-        (route) => false,
-      ),
+      onTap: onTap ??
+          () => Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.home,
+                (route) => false,
+              ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(

@@ -5,6 +5,9 @@ import '../../data/models/order_model.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/repository_contracts.dart';
 import '../../data/repositories/return_repository.dart';
+import '../../demo/customer_coach_tour_manager.dart';
+import '../../demo/customer_demo_order_data.dart';
+import '../../demo/customer_demo_return_data.dart';
 
 class ReturnEvidenceImage {
   const ReturnEvidenceImage({
@@ -99,6 +102,38 @@ class ReturnRequestViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _order =
+          CustomerDemoOrderData.orderById(_orderId) ??
+          CustomerDemoOrderData.orderById(26);
+      reasonCode = 'QUALITY_ISSUE';
+      reasonDetail =
+          '사과 일부가 눌려 있었고 표면 상태가 기대와 달라 반품을 요청합니다. 증빙 사진도 함께 첨부했습니다.';
+      _isCustomAmount = false;
+      _customRequestAmount = null;
+      _evidenceImages
+        ..clear()
+        ..addAll(const [
+          ReturnEvidenceImage(
+            fileName: 'apple_damage_01.jpg',
+            previewUrl:
+                'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=800&q=80',
+            storageUrl:
+                'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=800&q=80',
+          ),
+          ReturnEvidenceImage(
+            fileName: 'apple_damage_02.jpg',
+            previewUrl:
+                'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?auto=format&fit=crop&w=800&q=80',
+            storageUrl:
+                'https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?auto=format&fit=crop&w=800&q=80',
+          ),
+        ]);
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     _order = await _orderRepository.fetchOrderDetail(_orderId);
     _isLoading = false;
     notifyListeners();
@@ -165,6 +200,14 @@ class ReturnRequestViewModel extends ChangeNotifier {
   }
 
   Future<bool> submitReturnRequest() async {
+    if (CustomerCoachTourManager.instance.isDemoMode) {
+      _submittedReturn = CustomerDemoReturnData.submittedResult(
+        orderId: _orderId,
+        requestedAmount: requestAmount,
+      );
+      return true;
+    }
+
     if (_isSubmitting) {
       return false;
     }

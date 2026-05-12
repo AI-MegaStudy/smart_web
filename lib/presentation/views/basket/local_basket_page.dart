@@ -4,6 +4,8 @@ import '../../../app/router.dart';
 import '../../../core/session/mock_auth_session.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/local_basket_item_model.dart';
+import '../../../demo/customer_coach_tour_manager.dart';
+import '../../../demo/customer_demo_target_keys.dart';
 import '../../view_models/local_basket_view_model.dart';
 import '../../widgets/app_alert_dialog.dart';
 import '../../widgets/brand_app_bar_title.dart';
@@ -25,6 +27,12 @@ class _LocalBasketPageState extends State<LocalBasketPage> {
   void initState() {
     super.initState();
     _viewModel = LocalBasketViewModel()..load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CustomerCoachTourManager.instance.onPageReady(
+        CustomerCoachTourStage.basket,
+        context,
+      );
+    });
   }
 
   @override
@@ -540,6 +548,7 @@ class _BasketSummary extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             FilledButton.icon(
+              key: CustomerDemoTargetKeys.basketPrimaryAction,
               onPressed: viewModel.items.isEmpty
                   ? null
                   : () async {
