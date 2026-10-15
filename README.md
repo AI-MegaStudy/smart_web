@@ -24,8 +24,7 @@
 ### Frontend
 - **Flutter / Dart** — 고객용 웹 화면 및 사용자 인터페이스
 - **HTTP / REST API** — 백엔드 API 호출
-- **Provider** — 발표자료에 기재된 상태 관리 방식
-- **SharedPreferences** — 발표자료에 기재된 로컬 저장 방식
+- **Provider / SharedPreferences** — 발표자료에는 기재되어 있으나, 현재 `pubspec.yaml` 의존성 목록에서는 확인되지 않아 실제 사용 여부를 추가 확인해야 합니다.
 
 ### Backend
 - **Python / FastAPI** — REST API 서버
